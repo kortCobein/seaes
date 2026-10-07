@@ -1,0 +1,42 @@
+name: Verificar SEAES
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar TypeScript y compilar
+        run: npm run build
+
+      - name: Ejecutar pruebas de Excel
+        run: npm test
+
+      - name: Guardar sitio compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: seaes-utsjr-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
