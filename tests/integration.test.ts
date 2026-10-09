@@ -114,28 +114,52 @@ test('el entregable real se transforma en 14 fuentes sin inventar ni perder valo
   assert.deepEqual(omissions, [], 'El parser dejó diferencias literales del entregable sin representar');
 });
 
-test('consolidación distingue exactos, complementarios y conflictos con elección y suma explícita', () => {
+test('consolidación suma automáticamente aportaciones cuantitativas, ignora texto inválido y normaliza identidad', () => {
   const section = schema.sections.find(s => s.kind === 'quantitative' && s.fields.filter(f => f.type === 'number' && s.rows.some(r => r.fields[f.id])).length >= 2)!;
   const row = section.rows.find(r => section.fields.filter(f => f.type === 'number' && r.fields[f.id]).length >= 2)!;
   const [a, b] = section.fields.filter(f => f.type === 'number' && row.fields[f.id]);
-  const record = (id: string, values: Record<string, number>): SeaesRecord => ({ id, sourceId: id, sectionId: section.id, rowId: row.id, values, originalValues: { ...values }, origins: {} });
+  const record = (id: string, values: Record<string, string | number>): SeaesRecord => ({
+    id, sourceId: id, sectionId: section.id, rowId: row.id, values, originalValues: { ...values }, origins: {},
+  });
+
   const first = record('A', { [a.id]: 10 });
-  const exact = consolidate([first, record('B', { [a.id]: 10 })], schema);
-  assert.equal(exact[0].status, 'exact');
-  assert.deepEqual(exact[0].sourceIds, ['A', 'B']);
+  const sameValue = consolidate([first, record('B', { [a.id]: 10 })], schema);
+  assert.equal(sameValue[0].resolved.values[a.id], 20, 'dos áreas con el mismo valor siguen siendo dos aportaciones');
+  assert.equal(sameValue[0].conflicts.length, 0);
+
   const complementary = consolidate([first, record('B', { [b.id]: 20 })], schema);
   assert.equal(complementary[0].status, 'complementary');
   assert.deepEqual(complementary[0].resolved.values, { [a.id]: 10, [b.id]: 20 });
-  const conflictingRecords = [first, record('B', { [a.id]: 20 })];
-  const conflict = consolidate(conflictingRecords, schema)[0];
-  assert.equal(conflict.status, 'conflict');
-  assert.equal(conflict.conflicts[0].resolved, false);
-  assert.deepEqual(conflict.conflicts[0].candidates.map(c => c.value), [10, 20]);
-  const selected = consolidate(conflictingRecords, schema, { [conflict.id]: { fields: { [a.id]: { mode: 'record', recordId: 'B' } } } });
+
+  const aggregated = consolidate([first, record('B', { [a.id]: 20 })], schema)[0];
+  assert.equal(aggregated.resolved.values[a.id], 30);
+  assert.equal(aggregated.conflicts.length, 0);
+  assert.equal(aggregated.status, 'complementary');
+
+  const mixed = consolidate([first, record('B', { [a.id]: 'texto inválido en campo numérico' })], schema)[0];
+  assert.equal(mixed.resolved.values[a.id], 10, 'el texto inválido no contamina la suma numérica');
+  assert.equal(mixed.conflicts.length, 0);
+
+  const selected = consolidate([first, record('B', { [a.id]: 20 })], schema, {
+    [aggregated.id]: { fields: { [a.id]: { mode: 'record', recordId: 'B' } } },
+  });
   assert.equal(selected[0].resolved.values[a.id], 20);
   assert.equal(selected[0].conflicts[0].resolved, true);
-  const summed = consolidate(conflictingRecords, schema, { [conflict.id]: { fields: { [a.id]: { mode: 'sum' } } } });
-  assert.equal(summed[0].resolved.values[a.id], 30);
+
+  const identitySection = schema.sections.find(s => s.kind === 'identity' && s.fields.some(f => /institución/i.test(f.label)))!;
+  const identityRow = identitySection.rows.find(r => identitySection.fields.some(f => r.fields[f.id]))!;
+  const institution = identitySection.fields.find(f => /institución/i.test(f.label) && identityRow.fields[f.id])!;
+  const identityRecord = (id: string, value: string): SeaesRecord => ({
+    id, sourceId: id, sectionId: identitySection.id, rowId: identityRow.id,
+    values: { [institution.id]: value }, originalValues: { [institution.id]: value }, origins: {},
+  });
+  const identity = consolidate([
+    identityRecord('I1', 'san juan del río'),
+    identityRecord('I2', 'UNIVERSIDAD TECNOLÓGICA DE SAN JUAN DEL RÍO'),
+  ], schema)[0];
+  assert.equal(identity.resolved.values[institution.id], 'Universidad Tecnológica de San Juan del Río');
+  assert.equal(identity.conflicts.length, 0);
+
   assert.equal(coverage(complementary, schema).filled, 2);
   assert.equal(normalize('  ÁREA   Académica '), 'area academica');
 });
