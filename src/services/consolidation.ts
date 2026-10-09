@@ -4,12 +4,20 @@ export const normalize = (value: unknown) => String(value ?? '').normalize('NFD'
 export const hasValue = (value: Scalar | undefined): value is Exclude<Scalar, null> => value !== null && value !== undefined && String(value).trim() !== '';
 export const fieldCount = (record: SeaesRecord) => Object.values(record.values).filter(hasValue).length;
 const same = (a: Scalar, b: Scalar) => typeof a === typeof b && normalize(a) === normalize(b);
+const unavailable = (value: Scalar) => typeof value === 'string' && normalize(value) === 'no disponible';
 
 function identity(record: SeaesRecord, section: SectionSchema) {
   if (section.kind !== 'annex') return `${section.id}:${record.rowId}`;
   const keys = section.fields.filter(f => f.type === 'text' && !/observaci|comentario|evidencia|liga|url/i.test(f.label)).slice(0, 2);
   const values = keys.map(f => normalize(record.values[f.id]));
   return `${section.id}:${values.some(Boolean) ? JSON.stringify(values) : record.id}`;
+}
+
+function canonicalIdentity(label: string, fallback: Scalar): Scalar {
+  const key = normalize(label);
+  if (/institucion/.test(key)) return 'Universidad Tecnológica de San Juan del Río';
+  if (/entidad/.test(key)) return 'Querétaro';
+  return fallback;
 }
 
 export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, decisions: Record<string, GroupDecision> = {}): RecordGroup[] {
@@ -22,36 +30,103 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
     const key = section.kind === 'annex' && decisions[base]?.separate ? `${base}:${record.id}` : base;
     buckets.set(key, [...(buckets.get(key) ?? []), record]);
   }
+
   const groups: RecordGroup[] = [];
   for (const [id, members] of buckets) {
     const section = sections.get(members[0].sectionId)!;
     const values: Record<string, Scalar> = {};
     const origins: SeaesRecord['origins'] = {};
     const conflicts: RecordGroup['conflicts'] = [];
+
+    const setOrigin = (fieldId: string, recordId: string) => {
+      origins[fieldId] = members.find(r => r.id === recordId)?.origins[fieldId] ?? { sheet: section.sheet, cell: '' };
+    };
+
     for (const field of section.fields) {
-      const candidates = members.filter(r => hasValue(r.values[field.id])).map(r => ({ recordId: r.id, sourceId: r.sourceId, value: r.values[field.id] }));
+      const candidates = members
+        .filter(r => hasValue(r.values[field.id]))
+        .map(r => ({ recordId: r.id, sourceId: r.sourceId, value: r.values[field.id] }));
       if (!candidates.length) continue;
+
       const different = candidates.some(c => !same(c.value, candidates[0].value));
       const decision = decisions[id]?.fields?.[field.id];
-      let selected = candidates.find(c => decision?.recordId === c.recordId) ?? candidates[0];
-      values[field.id] = selected.value;
-      origins[field.id] = members.find(r => r.id === selected.recordId)?.origins[field.id] ?? { sheet: section.sheet, cell: '' };
-      let resolved = decision?.mode === 'record' && candidates.some(c => c.recordId === decision.recordId);
-      if (decision?.mode === 'sum' && candidates.every(c => typeof c.value === 'number')) {
-        // Deliberate user decision, never automatic aggregation of overlapping populations.
-        values[field.id] = candidates.reduce((sum, c) => sum + Number(c.value), 0);
-        resolved = true;
+
+      // Los campos de identidad no son aportaciones acumulables. Esta aplicación es
+      // específica de UTSJR, por lo que Entidad e Institución se normalizan y nunca
+      // deben producir conflictos ni concatenaciones como "San Juan del Río\nUniversidad...".
+      if (section.kind === 'identity') {
+        values[field.id] = canonicalIdentity(field.label, candidates[0].value);
+        setOrigin(field.id, candidates[0].recordId);
+        continue;
+      }
+
+      // Una decisión explícita del usuario siempre prevalece sobre la agregación automática.
+      if (decision?.mode === 'record') {
+        const selected = candidates.find(c => c.recordId === decision.recordId) ?? candidates[0];
+        values[field.id] = selected.value;
+        setOrigin(field.id, selected.recordId);
+        if (different) conflicts.push({ fieldId: field.id, candidates, resolved: candidates.some(c => c.recordId === decision.recordId) });
+        continue;
+      }
+      if (decision?.mode === 'sum' && candidates.some(c => typeof c.value === 'number')) {
+        const numeric = candidates.filter(c => typeof c.value === 'number');
+        values[field.id] = numeric.reduce((sum, c) => sum + Number(c.value), 0);
+        setOrigin(field.id, numeric[0].recordId);
+        if (different) conflicts.push({ fieldId: field.id, candidates, resolved: true });
+        continue;
       }
       if (decision?.mode === 'combine' && field.type === 'text') {
         values[field.id] = [...new Set(candidates.map(c => String(c.value)))].join('\n');
-        resolved = true;
+        setOrigin(field.id, candidates[0].recordId);
+        if (different) conflicts.push({ fieldId: field.id, candidates, resolved: true });
+        continue;
       }
-      if (different) conflicts.push({ fieldId: field.id, candidates, resolved: !!resolved });
+
+      // Los formularios importados corresponden a áreas/programas distintos. En campos
+      // cuantitativos sus cifras son aportaciones al total institucional, no versiones
+      // rivales del mismo dato: se suman por defecto.
+      if (field.type === 'number') {
+        const numeric = candidates.filter(c => typeof c.value === 'number');
+        if (numeric.length) {
+          values[field.id] = numeric.reduce((sum, c) => sum + Number(c.value), 0);
+          setOrigin(field.id, numeric[0].recordId);
+          // Texto accidental en un campo numérico ya aparece como advertencia de importación;
+          // no debe convertir una suma válida en conflicto.
+          continue;
+        }
+        const notAvailable = candidates.filter(c => unavailable(c.value));
+        if (notAvailable.length === candidates.length) {
+          values[field.id] = 'No disponible';
+          setOrigin(field.id, notAvailable[0].recordId);
+          continue;
+        }
+      }
+
+      // Comentarios/observaciones de varias áreas son complementarios y se conservan juntos.
+      if (field.type === 'text' && /comentario|observaci/i.test(field.label)) {
+        values[field.id] = [...new Set(candidates.map(c => String(c.value)))].join('\n');
+        setOrigin(field.id, candidates[0].recordId);
+        continue;
+      }
+
+      const selected = candidates[0];
+      values[field.id] = selected.value;
+      setOrigin(field.id, selected.recordId);
+      if (different) conflicts.push({ fieldId: field.id, candidates, resolved: false });
     }
+
     const exact = members.length > 1 && members.every(r => section.fields.every(f => same(r.values[f.id] ?? null, members[0].values[f.id] ?? null)));
-    groups.push({ id, section, records: members, resolved: { ...members[0], values, origins }, sourceIds: [...new Set(members.map(r => r.sourceId))], conflicts,
-      status: conflicts.length ? 'conflict' : exact ? 'exact' : members.length > 1 ? 'complementary' : 'unique' });
+    groups.push({
+      id,
+      section,
+      records: members,
+      resolved: { ...members[0], values, origins },
+      sourceIds: [...new Set(members.map(r => r.sourceId))],
+      conflicts,
+      status: conflicts.length ? 'conflict' : exact ? 'exact' : members.length > 1 ? 'complementary' : 'unique',
+    });
   }
+
   // Qualitative entries with the same programme but different descriptions remain independent.
   const programmeCounts = new Map<string, number>();
   const programmeKey = (g: RecordGroup) => `${g.section.id}:${normalize(g.resolved.values[g.section.fields.find(f => f.type === 'text')?.id ?? ''])}`;
