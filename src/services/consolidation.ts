@@ -123,7 +123,7 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
       resolved: { ...members[0], values, origins },
       sourceIds: [...new Set(members.map(r => r.sourceId))],
       conflicts,
-      status: conflicts.length ? 'conflict' : exact ? 'exact' : members.length > 1 ? 'complementary' : 'unique',
+      status: conflicts.length ? 'conflict' : section.kind === 'annex' && exact ? 'exact' : members.length > 1 ? 'complementary' : 'unique',
     });
   }
 
