@@ -15,9 +15,9 @@ Autoridad: los dos encargos UI/UX del usuario del 7 de octubre de 2026 y la corr
 
 ## Navegación y estado
 
-Solo Dashboard, Registros y Archivos son áreas principales. Detalle, edición, alta, conflictos, importación y exportación abren el Dialog compartido. Navegar preserva filtros de Registros. La búsqueda global existe una sola vez y navega a Registros; limpiar restaura resultados inmediatamente. Los filtros de Dashboard son independientes y contextuales.
+La navegación principal consta de cuatro vistas: Dashboard (gráficas y administración de fuentes), Ejemplos (indicaciones, cambios y ejemplos), Indicadores (todos o solo maestría) y Anexos y rasgos (anexos y referencias de rasgos). Una sola navbar aloja fuente, índice, búsqueda, filtros avanzados, importación, exportación, alta y limpieza; conserva la selección global al cambiar de sección. Los filtros se aplican sobre aportaciones; las hojas de referencia pertenecen a la plantilla común y no se atribuyen falsamente a un archivo importado. Las gráficas usan el subconjunto filtrado y el resumen completo requiere restablecer filtros.
 
-La búsqueda y filtros se guardan en sessionStorage, no en URL: pueden contener textos privados capturados, la app es local y las fuentes no son compartibles por enlace. Las preferencias de Ocultar nulos van a localStorage; una instalación nueva empieza con false. No tocan IndexedDB ni el consolidado. Las métricas globales siempre usan el universo completo. Un valor capturado 0 es dato. Las tablas paginan; cambios de filtros reinician página y selección.
+La búsqueda y los filtros globales se guardan en sessionStorage, no en URL: pueden contener textos privados capturados, la app es local y las fuentes no son compartibles por enlace. Las preferencias de Ocultar nulos van a localStorage; una instalación nueva empieza con false. No tocan IndexedDB ni el consolidado. Las métricas globales siempre usan el universo completo. Un valor capturado 0 es dato. Las tablas paginan; cambios de filtros reinician página y selección.
 
 ## Operaciones y recuperación
 
