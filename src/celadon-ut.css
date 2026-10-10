@@ -407,3 +407,56 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ut-green-dark)}
   .analysis-reference-list button,.analysis-missing-list button{transition:none}
   .analysis-reference-list button:hover,.analysis-missing-list button:hover{transform:none}
 }
+
+
+/* Official UTSJR identity, compact toolbar and visible session reset. */
+.app-header{gap:17px;justify-content:space-between}
+.app-header .brand{min-width:0;gap:10px}
+.ut-navbar-logo{display:block;width:180px;height:34px;object-fit:contain;flex-shrink:0}
+.brand-name{font-family:'Outfit','Segoe UI',sans-serif;color:var(--ut-blue);font-size:17px;font-weight:600;letter-spacing:-.02em}
+.app-header nav{margin-left:clamp(0px,2vw,25px);flex-shrink:0}
+.header-search{width:clamp(195px,20vw,290px);margin-left:auto;flex:1 1 195px;min-width:165px;max-width:300px}
+.clear-session-button{
+  flex:0 0 auto;white-space:nowrap;min-height:42px;
+  color:var(--ut-blue);border:1px solid rgba(255,255,255,.82);
+  background:var(--celadon-gloss);font-weight:600;padding:9px 14px;
+}
+.clear-session-button:hover:not(:disabled){border-color:rgba(0,157,129,.48);color:var(--ut-green-dark)}
+.clear-session-button:disabled{opacity:.45}
+.workspace{padding-top:26px}
+.feedback:empty{display:none}
+@media(max-width:1180px){
+  .app-header{gap:10px;padding:10px 17px}
+  .ut-navbar-logo{width:151px;height:29px}
+  .app-header .brand{gap:6px}
+  .brand-name{font-size:15px}
+  .app-header nav{gap:0;margin-left:0}
+  .app-header nav .nav-item{padding:8px 11px;font-size:12px}
+  .header-search{min-width:140px;max-width:240px}
+  .clear-session-button{padding:8px 10px;font-size:12px}
+}
+@media(max-width:900px){
+  .app-header{flex-wrap:wrap;height:auto;border-radius:27px;gap:10px}
+  .app-header .brand{order:0}
+  .app-header nav{order:1;margin-left:auto}
+  .header-search{order:2;margin-left:0;max-width:none;flex:1 1 190px}
+  .clear-session-button{order:3}
+}
+@media(max-width:760px){
+  .app-header{display:flex;align-items:center;flex-wrap:wrap;width:calc(100% - 20px);padding:12px 14px;gap:9px}
+  .app-header .brand{order:0;flex:1 1 auto}
+  .ut-navbar-logo{width:145px;height:28px}
+  .brand-name{font-size:14px}
+  .app-header nav{order:2;align-self:auto;width:100%;height:auto;justify-content:space-around;gap:4px;margin:0;padding:0}
+  .app-header nav .nav-item{min-height:39px;padding:8px 13px}
+  .header-search{order:3;width:auto;min-width:0;max-width:none;flex:1 1 140px;margin:0}
+  .clear-session-button{order:4;min-height:39px;padding:7px 11px}
+  .workspace{padding-top:24px}
+}
+@media(max-width:430px){
+  .app-header .brand{gap:4px}
+  .ut-navbar-logo{width:128px;height:25px}
+  .brand-name{font-size:13px}
+  .clear-session-button{font-size:11px;padding:6px 8px}
+  .header-search{flex-basis:130px}
+}
