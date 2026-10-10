@@ -1,0 +1,323 @@
+/* Celadon UT skin. Original visual language: TemplateMo Celadon 633.
+   White and soft-white surfaces retained; only the template's accent palette
+   has been remapped to UTSJR green #009D81 and blue #00245A.
+   Interactions and data components remain the application's own React code. */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Albert+Sans:wght@400;500;600;700&display=swap');
+
+:root{
+  color-scheme:light;
+  --ut-green:#009D81;--ut-green-dark:#007762;--ut-green-soft:#E0F5EF;
+  --ut-blue:#00245A;--ut-blue-2:#164879;--ut-blue-soft:#E1EDF9;
+  --ink:#232D3C;--muted:#67758B;
+  --line:rgba(35,45,60,.11);--line-strong:#BECADD;
+  --surface:#F8FAFF;--surface-2:#EAF0FA;
+  --radius:28px;
+  --celadon-canvas:#E8EDF7;
+  --celadon-plate:#F3F6FD;
+  --celadon-sunk:#DCE4F3;
+  --celadon-gloss:linear-gradient(180deg,#FEFEFF 0%,#F5F8FD 46%,#E9EFFA 46.01%,#DEE7F6 100%);
+  --celadon-green:linear-gradient(180deg,#78E3CF 0%,#3CCAB1 46%,#009D81 46.01%,#007762 100%);
+  --celadon-blue:linear-gradient(180deg,#A5C7E9 0%,#6095C5 46%,#174C85 46.01%,#00245A 100%);
+  --celadon-shadow:0 22px 38px -20px rgba(35,45,60,.35),0 8px 16px -10px rgba(35,45,60,.16),inset 2px 3px 4px rgba(255,255,255,.97),inset -3px -5px 9px rgba(35,45,60,.09);
+  --celadon-shadow-sm:0 12px 22px -13px rgba(35,45,60,.33),inset 2px 2px 3px rgba(255,255,255,.94),inset -2px -3px 6px rgba(35,45,60,.09);
+  --celadon-well:inset 4px 5px 11px -3px rgba(35,45,60,.20),inset -2px -3px 6px rgba(255,255,255,.9);
+  --celadon-lip:inset 0 1px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(35,45,60,.12);
+  --celadon-ease:cubic-bezier(.19,.86,.22,1);
+  --shadow-sm:var(--celadon-shadow-sm);
+  --shadow-md:var(--celadon-shadow);
+}
+body{
+  font-family:'Albert Sans','Segoe UI',Arial,sans-serif;
+  background:var(--celadon-canvas);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(48vw 40vw at 12% 6%,rgba(183,212,245,.58),transparent 62%),
+             radial-gradient(40vw 36vw at 88% 22%,rgba(0,157,129,.13),transparent 64%),
+             radial-gradient(52vw 44vw at 60% 96%,rgba(0,36,90,.10),transparent 66%);
+}
+#root{position:relative;z-index:1;}
+h1,h2,h3,.brand,.analysis-kpis strong,.detail-metrics strong{
+  font-family:'Outfit','Segoe UI',sans-serif;
+}
+h1{font-size:clamp(27px,3vw,38px);font-weight:500;letter-spacing:-.032em;line-height:1.12}
+h2{font-size:19px;font-weight:600}
+h3{font-weight:600}
+
+/* Floating Celadon top capsule */
+.app-shell{min-height:100dvh;padding-top:16px}
+.app-header{
+  position:sticky;top:12px;z-index:35;
+  width:min(1620px,calc(100% - 48px));
+  height:auto;min-height:78px;margin:0 auto;padding:12px 20px;
+  gap:34px;border:1px solid rgba(255,255,255,.66);border-radius:999px;
+  background:linear-gradient(180deg,rgba(254,254,255,.96) 0%,rgba(244,247,253,.95) 46%,rgba(232,238,250,.94) 46.01%,rgba(222,231,246,.94) 100%);
+  box-shadow:0 12px 23px -15px rgba(35,45,60,.55),var(--celadon-lip);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+.brand{gap:12px;font-size:20px;font-weight:600;letter-spacing:-.025em}
+.brand strong{font-family:'Albert Sans',sans-serif;font-weight:500}
+.brand-mark{
+  width:44px;height:44px;border-radius:16px;
+  background:var(--celadon-green);
+  box-shadow:0 10px 17px -9px rgba(0,119,98,.7),inset 1px 2px 3px rgba(255,255,255,.55),inset -2px -3px 5px rgba(0,54,46,.3);
+}
+.app-header nav{align-self:center;gap:4px;background:rgba(220,228,243,.5);padding:5px;border-radius:999px;box-shadow:var(--celadon-well)}
+.nav-item{
+  min-height:42px;border:0;border-radius:999px;
+  padding:7px 16px;color:var(--muted);
+  font-size:13px;transition:background .25s var(--celadon-ease),box-shadow .25s var(--celadon-ease),transform .25s var(--celadon-ease);
+}
+.nav-item.active{
+  color:var(--ut-blue);border:0;
+  background:var(--celadon-gloss);box-shadow:var(--celadon-shadow-sm);
+}
+.nav-item:hover{background:rgba(255,255,255,.64);transform:translateY(-1px)}
+.header-search{width:min(300px,24vw)}
+.search-field,.analysis-search{
+  min-height:42px;border:1px solid rgba(255,255,255,.72);
+  border-radius:999px;background:var(--celadon-sunk);
+  box-shadow:var(--celadon-well);padding:0 14px;
+}
+.search-field input,.analysis-search input{min-height:40px}
+.search-field:focus-within,.analysis-search:focus-within{outline:2px solid var(--ut-green);outline-offset:2px}
+.workspace{max-width:1600px;padding:36px 42px 20px}
+.page-heading{margin-bottom:26px}
+.eyebrow{font-size:11px;letter-spacing:.14em;color:var(--ut-green-dark)}
+.local-state{
+  padding:9px 14px;border-radius:999px;
+  background:var(--celadon-plate);box-shadow:var(--celadon-shadow-sm)
+}
+.local-state svg{color:var(--ut-green-dark)}
+.workspace-footer{align-items:center;padding:20px 4px 28px;margin-top:24px;border-top:1px solid var(--line);gap:16px}
+.workspace-footer a{color:var(--ut-blue);text-underline-offset:3px}
+.workspace-footer a:hover{color:var(--ut-green-dark)}
+
+/* Glossy pills with Celadon press/lift feedback */
+.button,.action-menu>.button,.table-options>summary{
+  border-radius:999px;min-height:42px;padding:8px 19px;
+  background-image:var(--celadon-gloss);
+  background-color:transparent;background-repeat:no-repeat;
+  box-shadow:0 10px 18px -11px rgba(35,45,60,.55),var(--celadon-lip);
+  border:1px solid rgba(255,255,255,.7);
+  font-size:13px;font-weight:600;
+  transition:transform .23s var(--celadon-ease),box-shadow .23s var(--celadon-ease),filter .23s;
+}
+.button.primary{
+  background:var(--celadon-green);
+  border-color:rgba(0,119,98,.34);color:white;text-shadow:0 1px 2px rgba(0,47,39,.4);
+  box-shadow:0 12px 20px -11px rgba(0,119,98,.7),inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 3px rgba(0,45,37,.22);
+}
+.button.primary:hover:not(:disabled){background:var(--celadon-green);filter:saturate(1.09) brightness(1.04)}
+.button.secondary{background:var(--celadon-gloss);border:1px solid rgba(255,255,255,.78)}
+.button.secondary:hover:not(:disabled){background:var(--celadon-gloss);border-color:#8EA5C6}
+.button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 17px 25px -13px rgba(35,45,60,.46),var(--celadon-lip)}
+.button.primary:hover:not(:disabled){box-shadow:0 20px 29px -14px rgba(0,119,98,.7),inset 0 1px 0 rgba(255,255,255,.5)}
+.button:active:not(:disabled){transform:translateY(1px);box-shadow:var(--celadon-well)}
+.button.small{min-height:34px;padding:6px 13px}
+.button.text{background:transparent;border-color:transparent;box-shadow:none}
+.button.danger{background:var(--celadon-gloss);border-color:#edc8c3}
+.button.danger.solid{background:linear-gradient(180deg,#de756c,#ad2d25);color:#fff}
+.icon-button{border-radius:50%;transition:background .2s,transform .2s}
+.icon-button:hover:not(:disabled){transform:translateY(-1px)}
+.action-menu summary{border-radius:999px}
+.menu-content,.table-options-content{
+  border:1px solid rgba(255,255,255,.86);border-radius:20px;
+  background:linear-gradient(145deg,#FFFFFF,var(--celadon-plate));
+  box-shadow:var(--celadon-shadow);padding:9px;min-width:220px;
+}
+.menu-content button{border-radius:12px}
+.menu-content button:hover{background:var(--ut-blue-soft);color:var(--ut-blue)}
+
+/* Raised cards and inset control wells */
+.panel{
+  border:1px solid rgba(255,255,255,.82);
+  border-radius:28px;
+  background:linear-gradient(155deg,#FFFFFF 0%,var(--celadon-plate) 50%,#EAF0FA 100%);
+  box-shadow:var(--celadon-shadow);
+}
+.panel-heading,.table-toolbar,.analysis-controls{border-bottom-color:rgba(35,45,60,.09)}
+.panel-heading{padding:23px 27px}
+.count,.badge{
+  border-radius:999px;padding:4px 10px;font-weight:600;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.66);
+}
+.badge.unique,.badge.complementary{background:#D4F2E8;color:var(--ut-green-dark)}
+.badge.exact{background:#D7E7FA;color:var(--ut-blue)}
+.badge.demo{background:#E0EBF7;color:var(--ut-blue)}
+input:not([type=checkbox]):not([type=radio]),select,textarea{
+  border-radius:14px;background:#FCFDFF;border:1px solid #BBC9DB;
+  box-shadow:inset 1px 2px 5px rgba(35,45,60,.06),inset 0 1px 0 rgba(255,255,255,.94);
+}
+.search-field input,.analysis-search input{
+  background:transparent!important;box-shadow:none!important;
+  border:0!important;border-radius:0!important;
+}
+input[type=checkbox],input[type=radio]{accent-color:var(--ut-green-dark)}
+
+/* KPI cards: keep all six figures, but each lives in a real Celadon tile */
+.analysis-kpis{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:17px;border:0;border-radius:0;background:none;overflow:visible;
+  margin-bottom:24px;
+}
+.analysis-kpis>button{
+  min-height:115px;border:1px solid rgba(255,255,255,.83)!important;
+  border-radius:24px;padding:20px 24px;
+  background:linear-gradient(155deg,#FFFFFF,var(--celadon-plate) 49%,#EAF0FA)!important;
+  box-shadow:var(--celadon-shadow-sm);
+  transition:transform .26s var(--celadon-ease),box-shadow .26s var(--celadon-ease);
+}
+.analysis-kpis>button:hover{
+  transform:translateY(-4px);
+  box-shadow:var(--celadon-shadow);
+}
+.analysis-kpis>button:nth-child(3n+1){border-top:3px solid var(--ut-green)!important}
+.analysis-kpis>button:nth-child(3n+2){border-top:3px solid var(--ut-blue)!important}
+.analysis-kpis>button:nth-child(3n){border-top:3px solid #259a9b!important}
+.analysis-kpis>button>span{font-size:12px;letter-spacing:.015em}
+.analysis-kpis strong{font-size:35px;font-weight:500;color:var(--ut-green-dark)}
+.analysis-kpis>button:nth-child(3n+2) strong{color:var(--ut-blue)}
+.analysis-kpis>button:nth-child(3n) strong{color:#12627F}
+.analysis-kpis strong.analysis-attention{color:var(--danger)}
+.analysis-panel{overflow:hidden}
+.analysis-controls{gap:13px;padding:20px 24px}
+.analysis-controls select,.analysis-reference-toolbar select,.analysis-filter-grid select{border-radius:13px;min-height:42px}
+.analysis-chart-switch{
+  border:0;border-radius:999px;padding:5px;
+  background:var(--celadon-sunk);box-shadow:var(--celadon-well);
+}
+.analysis-chart-switch button{border-radius:999px;min-height:32px;padding:7px 13px}
+.analysis-chart-switch button.active{
+  color:var(--ut-blue);background:var(--celadon-gloss);
+  box-shadow:var(--celadon-shadow-sm);
+}
+.analysis-bar{
+  min-height:45px;padding:9px 10px;border-radius:12px;
+  border-bottom-color:rgba(35,45,60,.07);
+  transition:background .2s,transform .2s;
+}
+.analysis-bar:hover{background:rgba(220,228,243,.55);transform:translateX(3px)}
+.analysis-bar-track{
+  height:13px;border-radius:999px;background:var(--celadon-sunk);
+  box-shadow:var(--celadon-well);padding:2px;
+}
+.analysis-bar-track>span{border-radius:999px}
+.analysis-legend button{border-radius:10px}
+.analysis-legend button>i{border-radius:50%}
+.analysis-donut>svg{filter:drop-shadow(0 10px 12px rgba(0,36,90,.13))}
+.analysis-empty-mark{
+  border-radius:22px;
+  background:var(--celadon-green);color:white;
+  box-shadow:var(--celadon-shadow-sm);
+}
+.analysis-filter-grid{gap:20px}
+.analysis-heading{padding-top:25px}
+
+/* Scrollable data tables remain functional and readable */
+.table-scroll{border-radius:0 0 24px 24px}
+.table-scroll th{
+  background:#E3EBF7;color:var(--ut-blue);font-size:11px;
+}
+.table-scroll td,.table-scroll th{padding:14px 18px;border-bottom-color:rgba(35,45,60,.075)}
+.table-scroll tbody tr:hover{background:#E7F3F1}
+.table-scroll tbody tr.selected{background:#D8F2E8}
+.table-footer{padding:14px 22px}
+.source-tag{border-radius:999px;background:var(--celadon-gloss);padding:4px 10px}
+.record-title{color:var(--ut-blue)}
+.record-title:hover{color:var(--ut-green-dark)}
+.source-title{gap:14px;align-items:center}
+.excel-file-icon{
+  width:29px;height:29px;object-fit:contain;flex:0 0 auto;
+  filter:drop-shadow(0 3px 4px rgba(0,36,90,.12));
+}
+.import-item>.excel-file-icon{width:40px;height:40px}
+.dropzone>.excel-file-icon{width:62px;height:62px}
+.dropzone{
+  min-height:180px;
+  border:2px dashed #A4B6CB;border-radius:25px;
+  background:linear-gradient(155deg,#FBFDFF,#E8F1FC);
+  box-shadow:inset 3px 4px 9px rgba(35,45,60,.08),inset -2px -3px 8px rgba(255,255,255,.9);
+  color:var(--ut-blue);
+}
+.dropzone:hover{background:linear-gradient(145deg,#EDFAF5,#E6F3F9);border-color:var(--ut-green)}
+.files-panel .search-field{border-radius:999px}
+.import-item{background:rgba(255,255,255,.5);border-radius:16px;padding:12px}
+.import-summary-row{border-radius:14px}
+.duplicate-notice{color:var(--ut-blue);font-weight:600}
+
+/* Soft clay dialogs and forms */
+.dialog{
+  border-radius:29px;border:1px solid rgba(255,255,255,.85);
+  background:linear-gradient(160deg,#FFFFFF,var(--celadon-plate));
+  box-shadow:0 30px 80px -25px rgba(0,24,61,.5),var(--celadon-shadow);
+}
+.dialog.drawer{border-radius:29px 0 0 29px}
+.dialog::backdrop{background:rgba(0,25,60,.52);backdrop-filter:blur(6px)}
+.dialog-heading{padding:23px 26px}
+.dialog-heading h2{font-family:'Outfit',sans-serif;font-size:21px;font-weight:600}
+.dialog-footer{padding:17px 24px}
+.export-options label,.conflict-candidates label{
+  border-radius:17px;
+  background:linear-gradient(155deg,#FFFFFF,#F0F5FC);
+  box-shadow:var(--celadon-shadow-sm);
+}
+.export-options label.selected,.conflict-candidates label.chosen{
+  border-color:var(--ut-green);
+  background:linear-gradient(140deg,#F9FFFE,#D7F3E9);
+}
+.record-conflicts fieldset{border-radius:19px}
+.conflict-outcome{border-radius:15px}
+.conflict-outcome.resolved{background:#E1F5EF}
+.detail-tabs{border:0;border-radius:999px;padding:5px;gap:5px;background:var(--celadon-sunk);box-shadow:var(--celadon-well)}
+.detail-tabs button{border-radius:999px}
+.detail-tabs button[aria-selected=true],.detail-tabs button.active{
+  background:var(--celadon-gloss);color:var(--ut-blue);box-shadow:var(--celadon-shadow-sm)
+}
+.message{border-radius:18px;padding:15px 17px;box-shadow:var(--celadon-shadow-sm)}
+.screen-actions{margin-bottom:23px}
+.quiet-empty{padding:60px 24px}
+
+/* Responsive: light panels remain legible, accessible controls are untouched */
+@media(max-width:1150px){
+  .app-header{gap:15px;width:calc(100% - 36px);padding:10px 14px}
+  .header-search{width:220px}
+  .nav-item{padding:7px 12px}
+  .workspace{padding:28px 24px}
+  .analysis-kpis{gap:13px}
+  .analysis-kpis>button{padding:17px 18px}
+}
+@media(max-width:760px){
+  .app-shell{padding-top:9px}
+  .app-header{position:relative;top:0;width:calc(100% - 18px);padding:13px 15px 11px;border-radius:26px;gap:7px}
+  .app-header nav{order:3;margin:12px 0 0;align-self:auto;width:100%;height:auto;justify-content:space-between;gap:1px}
+  .nav-item{gap:5px;font-size:11px;padding:8px;min-height:40px}
+  .header-search{width:calc(100% - 161px);min-width:115px}
+  .brand{font-size:16px}
+  .brand-mark{width:36px;height:36px;border-radius:13px}
+  .workspace{padding:27px 16px 12px}
+  .analysis-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .analysis-kpis>button{min-height:100px;padding:16px 14px;border-radius:20px}
+  .analysis-kpis>button:nth-child(3n+1){border-top:1px solid rgba(255,255,255,.8)!important}
+  .analysis-kpis>button:nth-child(3n+2){border-top:1px solid rgba(255,255,255,.8)!important}
+  .analysis-kpis>button:nth-child(2n+1){border-top:3px solid var(--ut-green)!important}
+  .analysis-kpis>button:nth-child(2n){border-top:3px solid var(--ut-blue)!important}
+  .analysis-kpis strong{font-size:28px}
+  .panel{border-radius:23px}
+  .panel-heading{padding:17px}
+  .table-scroll th,.table-scroll td{padding:11px 12px}
+  .dialog,.dialog.wide{border-radius:23px}
+  .dialog.drawer{border-radius:20px 0 0 20px}
+  .dialog-heading{padding:17px}
+  .dialog-footer{padding:14px}
+  .workspace-footer{justify-content:center;flex-wrap:wrap;text-align:center;gap:5px}
+  .analysis-controls{padding:15px}
+}
+@media(prefers-reduced-motion:reduce){
+  .analysis-kpis>button,.analysis-bar,.button,.nav-item{transition:none!important;transform:none!important}
+}
+@media(forced-colors:active){
+  .panel,.analysis-kpis>button,.button,.app-header{border:1px solid ButtonText!important}
+}

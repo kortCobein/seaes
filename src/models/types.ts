@@ -16,7 +16,7 @@ export interface WorkbookSchema {
 export type Compatibility = 'compatible' | 'variations' | 'partial' | 'unknown';
 export interface DataSource {
   id: string; name: string; filename: string; importedAt: string;
-  kind: 'real' | 'demo' | 'manual'; compatibility: Compatibility; warnings: string[];
+  kind: 'real' | 'demo' | 'manual'; compatibility: Compatibility; warnings: string[]; fingerprint?: string;
 }
 export interface SeaesRecord {
   id: string; sourceId: string; sectionId: string; rowId: string;

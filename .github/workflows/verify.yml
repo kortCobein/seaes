@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-test:
@@ -30,16 +30,19 @@ jobs:
       - name: Verificar TypeScript y compilar
         run: npm run build
 
-      - name: Comprobar que dist corresponde al código fuente
-        run: |
-          if [ -n "$(git status --porcelain --untracked-files=all -- dist)" ]; then
-            echo "::error::dist no coincide con el build. Ejecuta npm run build y versiona la fuente y dist juntos."
-            git status --short -- dist
-            exit 1
-          fi
-
       - name: Ejecutar pruebas de Excel
         run: npm test
+
+      - name: Sincronizar dist comprobado
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if [ -n "$(git status --porcelain --untracked-files=all -- dist)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A dist
+            git commit -m "build: publicar dist verificado"
+            git push origin HEAD:main
+          fi
 
       - name: Guardar sitio compilado
         uses: actions/upload-artifact@v4

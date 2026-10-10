@@ -4,6 +4,7 @@ import type { WorkSession } from '../models/types';
 const db = () => openDB(`seaes-utsjr:${new URL('.', location.href).pathname}`, 1, { upgrade(database) { database.createObjectStore('session'); database.createObjectStore('files'); } });
 export async function loadSession(): Promise<WorkSession | undefined> { return (await db()).get('session', 'current'); }
 export async function saveSession(session: WorkSession) { return (await db()).put('session', session, 'current'); }
+export async function loadOriginal(id: string): Promise<ArrayBuffer | undefined> { return (await db()).get('files', id); }
 export async function storeOriginal(id: string, data: ArrayBuffer) { return (await db()).put('files', data, id); }
 export async function deleteOriginal(id: string) { return (await db()).delete('files', id); }
 export async function clearOriginals() { return (await db()).clear('files'); }

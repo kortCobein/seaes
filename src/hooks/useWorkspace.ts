@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { emptySession, type DataSource, type ExportReport, type Scalar, type SeaesRecord, type WorkbookSchema, type WorkSession } from '../models/types';
 import { buildDemo, consolidate } from '../services/consolidation';
-import { clearOriginals, deleteOriginal, loadSession, saveSession, storeOriginal } from '../services/storage';
+import { fileFingerprint } from '../services/fileFingerprint';
+import { clearOriginals, deleteOriginal, loadOriginal, loadSession, saveSession, storeOriginal } from '../services/storage';
 import { exportExcel, getAsset, parseExcel } from '../services/workerClient';
 
 export interface ImportSummary { id: string; name: string; records: number; fields: number; message: string }
@@ -22,18 +23,45 @@ export function useWorkspace() {
   const run = useCallback(async (label: string, action: () => Promise<void>) => { setBusy(label); setError(''); setNotice(''); try { await action(); } catch (e) { setError(e instanceof Error ? e.message : 'No se pudo completar la operación.'); } finally { setBusy(''); } }, []);
   async function importFiles(items: { file: File; name: string }[]) { if (!schema) return; await run('Preparando importación…', async () => {
     const sources: DataSource[] = []; const records: SeaesRecord[] = []; const summary: ImportSummary[] = [];
+    // Migrar las fuentes previas sin perder sus registros, usando los originales en IndexedDB.
+    const known = new Map<string, DataSource>();
+    const migrated = new Map<string, string>();
+    for (const previous of session.sources.filter(s => s.kind === 'real')) {
+      let fingerprint = previous.fingerprint;
+      if (!fingerprint) {
+        try {
+          const original = await loadOriginal(previous.id);
+          if (original) { fingerprint = await fileFingerprint(original); migrated.set(previous.id, fingerprint); }
+        } catch { /* Sigue disponible la información de la sesión heredada. */ }
+      }
+      if (fingerprint) known.set(fingerprint, previous);
+    }
     for (let index = 0; index < items.length; index++) {
       const item = items[index]; setBusy(`Analizando ${index + 1} de ${items.length}: ${item.name}`);
       const source: DataSource = { id: crypto.randomUUID(), name: item.name, filename: item.file.name, importedAt: new Date().toISOString(), kind: 'real', compatibility: 'compatible', warnings: [] };
       try {
         if (item.file.size > 40 * 1024 * 1024) throw new Error('El archivo supera el límite de 40 MB para procesamiento local.');
-        const bytes = await item.file.arrayBuffer(); const result = await parseExcel(bytes, schema, source);
+        const bytes = await item.file.arrayBuffer();
+        const fingerprint = await fileFingerprint(bytes);
+        const duplicate = known.get(fingerprint);
+        if (duplicate) {
+          summary.push({ id: source.id, name: item.name, records: 0, fields: 0,
+            message: `Archivo idéntico a «${duplicate.name}». No se importó nuevamente ni se duplicaron sus cantidades.` });
+          continue;
+        }
+        const result = await parseExcel(bytes, schema, { ...source, fingerprint });
         sources.push(result.source); records.push(...result.records);
+        known.set(fingerprint, result.source);
         try { await storeOriginal(source.id, bytes); } catch { result.source.warnings.push('No se pudo conservar el archivo original en el navegador. La información extraída permanece disponible.'); }
         summary.push({ id: source.id, name: source.name, records: result.records.length, fields: result.records.reduce((n, r) => n + Object.keys(r.values).length, 0), message: result.source.warnings.join(' ') || 'Compatible' });
       } catch (e) { const message = e instanceof Error ? e.message : 'Error de lectura'; sources.push({ ...source, compatibility: 'unknown', warnings: [message] }); summary.push({ id: source.id, name: source.name, records: 0, fields: 0, message }); }
     }
-    setSession(s => ({ ...s, sources: [...s.sources, ...sources], records: [...s.records, ...records] })); setImportSummary(summary);
+    setSession(s => ({
+      ...s,
+      sources: [...s.sources.map(previous => migrated.has(previous.id) ? { ...previous, fingerprint: migrated.get(previous.id) } : previous), ...sources],
+      records: [...s.records, ...records],
+    }));
+    setImportSummary(summary);
   }); }
   async function useDemo() { if (!schema || session.sources.some(s => s.kind === 'demo')) return; await run('Leyendo los datos ficticios proporcionados…', async () => {
     const source: DataSource = { id: 'demo-original', name: 'Datos ficticios', filename: schema.demoFile, importedAt: new Date().toISOString(), kind: 'demo', compatibility: 'compatible', warnings: [] };

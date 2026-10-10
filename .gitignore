@@ -11,3 +11,10 @@ node_modules/
 /work/regresion-demo.xlsx
 /work/regresion-reporte.json
 /work/ui-fixtures.ts
+
+# Artefactos históricos regenerables; conservar scripts de auditoría en work/.
+/work/*.xlsx
+/work/excel-audit.json
+/work/parsed-demo.json
+/work/input-rows.txt
+/work/schema-verification.json
