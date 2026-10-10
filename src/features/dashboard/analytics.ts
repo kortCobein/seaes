@@ -10,6 +10,7 @@ export interface DashboardRecordFilter {
   period?: string;
   status?: 'all' | 'unique' | 'duplicates' | 'conflicts';
   groupIds?: string[];
+  sectionIds?: string[];
 }
 export interface AnalysisItem {
   id: string;
@@ -49,6 +50,7 @@ export function indicatorDefinitions(schema: WorkbookSchema) {
 export function filterDashboardGroups(groups: RecordGroup[], schema: WorkbookSchema, filters: DashboardRecordFilter): RecordGroup[] {
   return groups.filter(group => {
     if (filters.groupIds && !filters.groupIds.includes(group.id)) return false;
+    if (filters.sectionIds && !filters.sectionIds.includes(group.section.id)) return false;
     if (filters.indicator && !group.section.indicators.includes(Number(filters.indicator))) return false;
     if (filters.source && !group.sourceIds.includes(filters.source)) return false;
     if (filters.criterion && !group.section.fields.some(field => field.criterion === filters.criterion && hasValue(group.resolved.values[field.id]))) return false;

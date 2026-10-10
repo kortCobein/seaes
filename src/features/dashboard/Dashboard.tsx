@@ -10,6 +10,7 @@ import {
   type AnalysisItem, type DashboardDimension, type DashboardRecordFilter,
 } from './analytics';
 import './dashboard.css';
+import { AnnexAccordion } from './AnnexAccordion';
 
 export type { DashboardRecordFilter } from './analytics';
 
@@ -33,6 +34,8 @@ const dimensions: { value: DashboardDimension; label: string }[] = [
 ];
 const preferenceKey = 'seaes:dashboard:hide-nulls';
 const number = (value: number) => value.toLocaleString('es-MX');
+// Windows native select expands to the longest option. Keep original values and compact only labels.
+const shortOption = (value: string, limit = 42) => value.length > limit ? `${value.slice(0, limit - 1).trimEnd()}…` : value;
 
 function readPreference() {
   try { return localStorage.getItem(preferenceKey) === 'true'; } catch { return false; }
@@ -65,7 +68,6 @@ function AnalysisChart({ items, dimension, mode, onSelect }: {
   });
   if (!items.length) return <div className="analysis-no-results" role="status">Sin información para estos filtros.</div>;
   if (mode === 'bars') return <div className="analysis-bars" aria-label={percent ? 'Cobertura por categoría' : 'Registros por categoría'}>
-    <div className="analysis-bar-heading"><span>Categoría</span><span>{percent ? 'Cobertura' : 'Registros'}</span></div>
     <div className="analysis-bar-scroll">{items.map((item, index) => <button key={item.id} className="analysis-bar" onClick={() => onSelect(item)} title={item.description ?? item.label}>
       <span className="analysis-bar-label">{item.label}</span>
       <span className="analysis-bar-track" aria-hidden="true"><span style={{ width: `${item.value / max * 100}%`, background: chartColor(index) }}/></span>
@@ -147,16 +149,19 @@ export function Dashboard({ schema, groups, sources, busy, onImport, onDemo, onR
   const [advanced, setAdvanced] = useState(false);
   const [detail, setDetail] = useState<AnalysisItem>();
   const [showMissing, setShowMissing] = useState(false);
+  const [activeAnnexSheet, setActiveAnnexSheet] = useState<string | null>(null);
   const metrics = useMemo(() => dashboardMetrics(groups, sources, schema), [groups, sources, schema]);
-  const scoped = useMemo(() => filterDashboardGroups(groups, schema, filters), [groups, schema, filters]);
+  const annexSectionIds = useMemo(() => activeAnnexSheet ? schema.sections.filter(section => section.kind === 'annex' && section.sheet === activeAnnexSheet).map(section => section.id) : undefined, [schema.sections, activeAnnexSheet]);
+  const scoped = useMemo(() => filterDashboardGroups(groups, schema, { ...filters, sectionIds: annexSectionIds }), [groups, schema, filters, annexSectionIds]);
   const allItems = useMemo(() => dimension === 'examples' ? [] : aggregateDashboard({ dimension, groups: scoped, universe: groups, sources, schema }), [dimension, scoped, groups, sources, schema]);
   const items = useMemo(() => visibleAnalysisItems(allItems, hideNulls), [allItems, hideNulls]);
   const programmes = useMemo(() => [...new Set(groups.flatMap(recordProgrammes))].sort((a, b) => a.localeCompare(b, 'es-MX')), [groups]);
   const periods = useMemo(() => [...new Set(groups.flatMap(group => recordPeriods(group, schema)))].sort((a, b) => a.localeCompare(b, 'es-MX')), [groups, schema]);
   const indicators = indicatorDefinitions(schema);
   const missing = useMemo(() => aggregateDashboard({ dimension: 'indicators', groups: scoped, sources, schema }).filter(item => !item.hasData), [scoped, sources, schema]);
-  const activeFilters = Object.values(filters).filter(value => value && value !== 'all').length;
+  const activeFilters = Object.values(filters).filter(value => value && value !== 'all').length + (activeAnnexSheet ? 1 : 0);
   const filter = (key: keyof DashboardRecordFilter, value: string) => setFilters(previous => ({ ...previous, [key]: value }));
+  const resetFilters = () => { setFilters({}); setActiveAnnexSheet(null); };
   useEffect(() => { try { localStorage.setItem(preferenceKey, String(hideNulls)); } catch { /* Preference is retained in memory when storage is unavailable. */ } }, [hideNulls]);
 
   const title = dimension === 'all' || dimension === 'coverage' ? 'Cobertura por indicador'
@@ -175,18 +180,19 @@ export function Dashboard({ schema, groups, sources, busy, onImport, onDemo, onR
       <button onClick={() => { setDimension('conflicts'); setFilters({}); }}><span>Conflictos pendientes</span><strong className={metrics.conflicts ? 'analysis-attention' : ''}>{number(metrics.conflicts)}</strong></button>
       <button onClick={() => { setDimension('duplicates'); setFilters({}); }}><span>Duplicados</span><strong>{number(metrics.duplicates)}</strong></button>
     </div>}
+    <AnnexAccordion schema={schema} groups={groups} activeSheet={activeAnnexSheet} onFilter={setActiveAnnexSheet} onRecords={ids => onRecords({ groupIds: ids })}/>
 
     <section className="panel analysis-panel" aria-label="Análisis SEAES">
       <div className="analysis-controls">
         <label className="analysis-dimension">Mostrar<select value={dimension} onChange={event => { setDimension(event.target.value as DashboardDimension); setDetail(undefined); }} aria-label="Mostrar información"><>{dimensions.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</></select></label>
-        {dimension !== 'examples' && <><select className="analysis-period" aria-label="Filtrar Dashboard por periodo" value={filters.period ?? ''} onChange={event => filter('period', event.target.value)}><option value="">Todos los periodos</option>{available(periods, group => recordPeriods(group, schema)).map(period => <option key={period} value={period}>{period}</option>)}</select>
+        {dimension !== 'examples' && <><select className="analysis-period" aria-label="Filtrar Dashboard por periodo" value={filters.period ?? ''} onChange={event => filter('period', event.target.value)}><option value="">Todos los periodos</option>{available(periods, group => recordPeriods(group, schema)).map(period => <option key={period} value={period} title={period}>{shortOption(period)}</option>)}</select>
           <div className="analysis-chart-switch" role="group" aria-label="Visualización"><button className={mode === 'bars' ? 'active' : ''} aria-pressed={mode === 'bars'} onClick={() => setMode('bars')}><BarChart3 size={16}/>Barras</button><button className={mode === 'donut' ? 'active' : ''} aria-pressed={mode === 'donut'} onClick={() => setMode('donut')}><PieChart size={16}/>Anillo</button></div></>}
         <label className="analysis-hide-nulls"><input type="checkbox" checked={hideNulls} onChange={event => setHideNulls(event.target.checked)}/>Ocultar nulos</label>
         {dimension !== 'examples' && <button className="button secondary small" onClick={() => setAdvanced(true)}><Filter size={15}/>Filtros{activeFilters ? <span className="analysis-filter-count">{activeFilters}</span> : null}</button>}
-        {activeFilters > 0 && dimension !== 'examples' && <button className="button text small" onClick={() => setFilters({})}>Restablecer</button>}
+        {activeFilters > 0 && dimension !== 'examples' && <button className="button text small" onClick={resetFilters}>Restablecer</button>}
       </div>
       {dimension === 'examples' ? <References schema={schema} hideNulls={hideNulls}/> : !groups.length ? <div className="analysis-empty"><div className="analysis-empty-mark"><BarChart3 size={28}/></div><h2>Sin información cargada</h2><div className="button-row"><button className="button primary" disabled={!!busy} onClick={onImport}><Upload size={17}/>Importar Excel</button><button className="button secondary" disabled={!!busy} onClick={onDemo}><FlaskConical size={17}/>Usar datos ficticios</button></div></div> : <>
-        <div className="analysis-heading"><div><h2>{title}</h2>{activeFilters > 0 && <span className="subtle">{number(scoped.length)} registros en la selección</span>}</div><span className="subtle">{mode === 'donut' && (dimension === 'coverage' || dimension === 'all') ? 'Campos capturados' : mode === 'bars' && (dimension === 'coverage' || dimension === 'all') ? '% de campos capturados' : 'Registros'}</span></div>
+        <div className="analysis-heading"><div><h2>{title}</h2>{activeFilters > 0 && <span className="subtle">{activeAnnexSheet ? `${activeAnnexSheet} · ` : ''}{number(scoped.length)} registros en la selección</span>}</div><span className="subtle">{mode === 'donut' && (dimension === 'coverage' || dimension === 'all') ? 'Campos capturados' : mode === 'bars' && (dimension === 'coverage' || dimension === 'all') ? '% de campos capturados' : 'Registros'}</span></div>
         <AnalysisChart items={items} dimension={dimension} mode={mode} onSelect={setDetail}/>
         <div className="analysis-footer"><span>{items.length} de {allItems.length} categorías{hideNulls && ' · nulos ocultos'}</span>{missing.length > 0 && !hideNulls && <button className="button text small" onClick={() => setShowMissing(true)}>Ver {missing.length} indicadores sin información<ArrowUpRight size={14}/></button>}</div>
       </>}
