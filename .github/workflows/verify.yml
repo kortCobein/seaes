@@ -2,7 +2,7 @@ name: Verificar SEAES
 
 on:
   push:
-    branches: [main, fix/cinco-secciones-criterios-logo-ut]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
