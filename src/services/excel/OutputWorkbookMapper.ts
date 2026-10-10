@@ -1,6 +1,9 @@
 import type { ExportReport, Scalar, SeaesRecord, WorkbookSchema } from '../../models/types';
 import { assertValidXml, equalValue, formulaSignatures, nameKey, openPackage, parseRef, parseSheetXml, xmlEscape } from './package';
 import type { WorkbookSheet } from './package';
+import { simplifyWorkbook } from './SimplifiedWorkbook';
+
+export type WorkbookExportMode = 'full' | 'simplified';
 
 interface CellChange { sheet: WorkbookSheet; ref: string; value: Scalar }
 const q = '(?:[A-Za-z_][\\w.-]*:)?';
@@ -99,7 +102,7 @@ function validateScalar(value: Scalar, location: string): void {
 }
 
 export class OutputWorkbookMapper {
-  async export(bytes: Uint8Array | ArrayBuffer, schema: WorkbookSchema, records: SeaesRecord[]): Promise<{ bytes: Uint8Array; report: ExportReport }> {
+  async export(bytes: Uint8Array | ArrayBuffer, schema: WorkbookSchema, records: SeaesRecord[], mode: WorkbookExportMode = 'full'): Promise<{ bytes: Uint8Array; report: ExportReport }> {
     const workbook = await openPackage(bytes);
     const changes = new Map<string, CellChange>();
     const assignedValues = new Map<string, Scalar>();
@@ -178,7 +181,8 @@ export class OutputWorkbookMapper {
       const before = original.sheets.find(candidate => candidate.path === sheet.path);
       if (!before || JSON.stringify(formulaSignatures(before.xml)) !== JSON.stringify(formulaSignatures(sheet.xml))) throw new Error(`No se pudieron verificar las fórmulas finales de ${sheet.name}.`);
     }
-    return { bytes: output, report: {
+    const report: ExportReport = {
+      mode: 'full',
       sheets: result.sheets.length,
       formulas: totalFormulas,
       charts: originalParts.filter(part => /^xl\/charts\/chart\d+\.xml$/.test(part.name)).length,
@@ -188,8 +192,9 @@ export class OutputWorkbookMapper {
       records: records.length,
       verified: true,
       modifiedParts: [...modifiedPaths],
-    } };
+    };
+    return mode === 'simplified' ? simplifyWorkbook(output, schema, records, report) : { bytes: output, report };
   }
 }
 
-export const exportWorkbook = (bytes: Uint8Array | ArrayBuffer, schema: WorkbookSchema, records: SeaesRecord[]): Promise<{ bytes: Uint8Array; report: ExportReport }> => new OutputWorkbookMapper().export(bytes, schema, records);
+export const exportWorkbook = (bytes: Uint8Array | ArrayBuffer, schema: WorkbookSchema, records: SeaesRecord[], mode: WorkbookExportMode = 'full'): Promise<{ bytes: Uint8Array; report: ExportReport }> => new OutputWorkbookMapper().export(bytes, schema, records, mode);

@@ -30,6 +30,14 @@ jobs:
       - name: Verificar TypeScript y compilar
         run: npm run build
 
+      - name: Comprobar que dist corresponde al código fuente
+        run: |
+          if [ -n "$(git status --porcelain --untracked-files=all -- dist)" ]; then
+            echo "::error::dist no coincide con el build. Ejecuta npm run build y versiona la fuente y dist juntos."
+            git status --short -- dist
+            exit 1
+          fi
+
       - name: Ejecutar pruebas de Excel
         run: npm test
 

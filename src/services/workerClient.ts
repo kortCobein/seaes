@@ -11,5 +11,5 @@ function request<T>(message: Record<string, unknown>): Promise<T> {
   return new Promise((resolve, reject) => { const id = ++sequence; pending.set(id, { resolve, reject }); worker!.postMessage({ ...message, id }); });
 }
 export const parseExcel = (bytes: ArrayBuffer, schema: WorkbookSchema, source: DataSource, mode: 'input' | 'output' = 'input') => request<ParseResult>({ type: 'parse', bytes, schema, source, mode });
-export const exportExcel = (bytes: ArrayBuffer, schema: WorkbookSchema, records: SeaesRecord[]) => request<{ bytes: Uint8Array; report: ExportReport }>({ type: 'export', bytes, schema, records });
+export const exportExcel = (bytes: ArrayBuffer, schema: WorkbookSchema, records: SeaesRecord[], mode: 'full' | 'simplified' = 'full') => request<{ bytes: Uint8Array; report: ExportReport }>({ type: 'export', bytes, schema, records, mode });
 export async function getAsset(name: string): Promise<ArrayBuffer> { const response = await fetch(`${import.meta.env.BASE_URL}data/${name}`); if (!response.ok) throw new Error(`No se encontró el recurso ${name}.`); return response.arrayBuffer(); }

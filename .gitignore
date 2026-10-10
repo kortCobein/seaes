@@ -1,5 +1,13 @@
 node_modules/
-dist/
 .env
 .env.*
 *.log
+*.tsbuildinfo
+
+# Respaldos y resultados locales de verificación (dist sí se versiona).
+/work/reconcile-dist-*/
+/work/QA_*.xlsx
+/work/corrupto.xlsx
+/work/regresion-demo.xlsx
+/work/regresion-reporte.json
+/work/ui-fixtures.ts

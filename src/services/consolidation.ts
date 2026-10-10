@@ -50,19 +50,19 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
 
       const different = candidates.some(c => !same(c.value, candidates[0].value));
       const decision = decisions[id]?.fields?.[field.id];
+      const selected = candidates.find(c => c.recordId === decision?.recordId) ?? candidates[0];
 
       // Los campos de identidad no son aportaciones acumulables. Esta aplicación es
       // específica de UTSJR, por lo que Entidad e Institución se normalizan y nunca
       // deben producir conflictos ni concatenaciones como "San Juan del Río\nUniversidad...".
       if (section.kind === 'identity') {
-        values[field.id] = canonicalIdentity(field.label, candidates[0].value);
-        setOrigin(field.id, candidates[0].recordId);
+        values[field.id] = canonicalIdentity(field.label, selected.value);
+        setOrigin(field.id, selected.recordId);
         continue;
       }
 
       // Una decisión explícita del usuario siempre prevalece sobre la agregación automática.
       if (decision?.mode === 'record') {
-        const selected = candidates.find(c => c.recordId === decision.recordId) ?? candidates[0];
         values[field.id] = selected.value;
         setOrigin(field.id, selected.recordId);
         if (different) conflicts.push({ fieldId: field.id, candidates, resolved: candidates.some(c => c.recordId === decision.recordId) });
@@ -77,7 +77,7 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
       }
       if (decision?.mode === 'combine' && field.type === 'text') {
         values[field.id] = [...new Set(candidates.map(c => String(c.value)))].join('\n');
-        setOrigin(field.id, candidates[0].recordId);
+        setOrigin(field.id, selected.recordId);
         if (different) conflicts.push({ fieldId: field.id, candidates, resolved: true });
         continue;
       }
@@ -105,11 +105,10 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
       // Comentarios/observaciones de varias áreas son complementarios y se conservan juntos.
       if (field.type === 'text' && /comentario|observaci/i.test(field.label)) {
         values[field.id] = [...new Set(candidates.map(c => String(c.value)))].join('\n');
-        setOrigin(field.id, candidates[0].recordId);
+        setOrigin(field.id, selected.recordId);
         continue;
       }
 
-      const selected = candidates[0];
       values[field.id] = selected.value;
       setOrigin(field.id, selected.recordId);
       if (different) conflicts.push({ fieldId: field.id, candidates, resolved: false });

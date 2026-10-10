@@ -51,10 +51,10 @@ export function useWorkspace() {
     }); setNotice(record ? 'Registro actualizado. Se conserva su procedencia.' : 'Registro agregado al consolidado.');
   }
   function deleteRecords(records: SeaesRecord[]) { const ids = new Set(records.map(r => r.id)); setSession(s => ({ ...s, records: s.records.filter(r => !ids.has(r.id)), decisions: {} })); setNotice(`${ids.size} aportaciones eliminadas.`); }
-  async function download() { if (!schema) return; await run('Generando y verificando el Excel consolidado…', async () => {
+  async function download(mode: 'full' | 'simplified' = 'full') { if (!schema) return; await run('Generando y verificando el Excel…', async () => {
     const groups = consolidate(session.records, schema, session.decisions);
-    const result = await exportExcel(await getAsset('output.xlsx'), schema, groups.map(g => g.resolved));
-    const url = URL.createObjectURL(new Blob([new Uint8Array(result.bytes)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); const link = document.createElement('a'); link.href = url; link.download = `SEAES_UTSJR_CONSOLIDADO_${new Date().toLocaleDateString('en-CA')}.xlsx`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000); setExportReport(result.report);
+    const result = await exportExcel(await getAsset('output.xlsx'), schema, groups.map(g => g.resolved), mode);
+    const url = URL.createObjectURL(new Blob([new Uint8Array(result.bytes)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); const link = document.createElement('a'); link.href = url; link.download = `SEAES_UTSJR_${mode === 'simplified' ? 'SIMPLIFICADO' : 'COMPLETO'}_${new Date().toLocaleDateString('en-CA')}.xlsx`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000); setExportReport(result.report);
   }); }
   return { schema, session, setSession, busy, ready, error, setError, notice, setNotice, saved, importSummary, setImportSummary, exportReport, setExportReport, importFiles, useDemo, removeSources, clearSession, saveRecord, deleteRecords, download };
 }
