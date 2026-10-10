@@ -4,8 +4,9 @@ import type { SeaesRecord } from './models/types';
 import { consolidate } from './services/consolidation';
 import { useWorkspace } from './hooks/useWorkspace';
 import { Dashboard, dashboardDimensions } from './features/dashboard/Dashboard';
-import type { DashboardDimension, DashboardRecordFilter } from './features/dashboard/analytics';
+import { recordProgrammes, type DashboardDimension, type DashboardRecordFilter } from './features/dashboard/analytics';
 import { ReferenceScreen, type ReferenceKind } from './features/references/ReferenceScreen';
+import { CriteriaScreen } from './features/references/CriteriaScreen';
 import { AnnexAccordion } from './features/dashboard/AnnexAccordion';
 import { FilesScreen } from './features/files/FilesScreen';
 import { ExportDialog, ExportResult } from './features/files/ExportDialog';
@@ -18,11 +19,11 @@ import { RecordDetail } from './components/RecordDetail';
 import { SearchField } from './components/SearchField';
 import { ExcelIcon } from './components/ExcelIcon';
 
-const nav = [{ id: 'dashboard', label: 'Dashboard' }, { id: 'examples', label: 'Ejemplos' }, { id: 'indicators', label: 'Indicadores' }, { id: 'annexes', label: 'Anexos y rasgos' }] as const;
-type View = typeof nav[number]['id'];
+const nav = [{ id: 'dashboard', label: 'Dashboard' }, { id: 'indications', label: 'Indicaciones' }, { id: 'indicators', label: 'Indicadores' }, { id: 'annexes', label: 'Anexos' }, { id: 'traits', label: 'Rasgos' }] as const;
+type View = typeof nav[number]['id'] | 'criteria';
 const stateKey = `seaes-ui-v4:${location.pathname}`;
 function loadUI(): { view: View; query: string; filters: Filters } {
-  try { const state = JSON.parse(sessionStorage.getItem(stateKey) ?? '{}'); return { view: nav.some(n => n.id === state.view) ? state.view : 'dashboard', query: typeof state.query === 'string' ? state.query : '', filters: { ...cleanFilters, ...state.filters } }; } catch { return { view: 'dashboard', query: '', filters: { ...cleanFilters } }; }
+  try { const state = JSON.parse(sessionStorage.getItem(stateKey) ?? '{}'); return { view: (state.view === 'criteria' || nav.some(n => n.id === state.view)) ? state.view : 'dashboard', query: typeof state.query === 'string' ? state.query : '', filters: { ...cleanFilters, ...state.filters } }; } catch { return { view: 'dashboard', query: '', filters: { ...cleanFilters } }; }
 }
 const initialUI = loadUI();
 
@@ -34,7 +35,6 @@ export function App() {
   const [advanced, setAdvanced] = useState(false);
   const [referenceKind, setReferenceKind] = useState<ReferenceKind>('all');
   const [indicatorMode, setIndicatorMode] = useState<'all' | 'masters'>('all');
-  const [annexMode, setAnnexMode] = useState<'annexes' | 'rasgos'>('annexes');
   const [annexSheet, setAnnexSheet] = useState<string | null>(null);
   const [chartDimension, setChartDimension] = useState<Exclude<DashboardDimension, 'examples'>>('all');
   const [chartMode, setChartMode] = useState<'bars' | 'donut'>('bars');
@@ -49,10 +49,9 @@ export function App() {
   const updateFilter = (key: keyof Filters, value: string) => setFilters(previous => ({ ...previous, [key]: value, groupIds: undefined }));
   const source = session.sources.find(item => item.id === filters.source);
   const scopedSources = session.sources.filter(item => !filters.source || item.id === filters.source);
-  const isMaster = (g: (typeof groups)[number]) => /maestr[ií]a|posgrado/i.test([g.section.sheet, g.section.label, ...g.section.indicators.map(id => schema?.indicators?.find(v => v.id === id)?.label ?? '')].join(' '));
+  const isMaster = (g: (typeof groups)[number]) => /maestr[ií]a|posgrado/i.test([g.section.sheet, g.section.label, ...recordProgrammes(g), ...g.section.indicators.map(id => schema?.indicators?.find(v => v.id === id)?.label ?? ''), ...g.sourceIds.map(id => session.sources.find(s => s.id === id)?.name ?? ''), ...g.section.fields.filter(field => field.type === 'text' && /grado|nivel|programa/i.test(field.label)).map(field => String(g.resolved.values[field.id] ?? ''))].join(' '));
   const indicatorGroups = filtered.filter(g => g.section.kind !== 'annex' && (indicatorMode === 'all' || isMaster(g)));
-  const annexGroups = filtered.filter(g => g.section.kind === 'annex' && (!annexSheet || g.section.sheet === annexSheet));
-  const openFiltered = (next: DashboardRecordFilter) => { setFilters(previous => ({ ...previous, groupIds: next.groupIds, source: next.source ?? previous.source, indicator: next.indicator ?? previous.indicator, status: next.status && next.status !== 'all' ? next.status : previous.status })); setView(next.groupIds?.length && next.groupIds.every(id => groups.find(g => g.id === id)?.section.kind === 'annex') ? 'annexes' : 'indicators'); setAnnexSheet(null); setIndicatorMode('all'); setAnnexMode('annexes'); };
+  const openFiltered = (next: DashboardRecordFilter) => { setFilters(previous => ({ ...previous, groupIds: next.groupIds, source: next.source ?? previous.source, indicator: next.indicator ?? previous.indicator, status: next.status && next.status !== 'all' ? next.status : previous.status })); setView(next.groupIds?.length && next.groupIds.every(id => groups.find(g => g.id === id)?.section.kind === 'annex') ? 'annexes' : 'indicators'); setAnnexSheet(null); setIndicatorMode('all'); };
   const clearSession = () => setConfirmation({ title: 'Limpiar sesión', text: 'Se eliminarán todas las fuentes, capturas y decisiones del navegador. No se puede deshacer.', label: 'Limpiar sesión', action: () => { void workspace.clearSession(); reset(); setView('dashboard'); } });
   const removeDemo = () => setConfirmation({ title: 'Eliminar datos ficticios', text: `Se eliminarán ${demoSources.length} fuentes ficticias. Se conservan las reales.`, label: 'Eliminar datos ficticios', action: () => { void workspace.removeSources(demoSources.map(s => s.id)); reset(); } });
   const openRecords = (next: Partial<Filters>) => { setFilters(previous => ({ ...previous, ...next })); setQuery(''); setView('indicators'); setIndicatorMode('all'); setAnnexSheet(null); };
@@ -60,14 +59,13 @@ export function App() {
   const importAction = () => setImporting(true);
   if (!schema || !ready) return <div className="loading-screen"><div className="brand-mark"><ExcelIcon size={46}/></div><h1>SEAES · UTSJR</h1>{busy && <LoaderCircle className="spin"/>}<p role={error ? 'alert' : 'status'}>{busy || error}</p>{!busy && <button className="button primary" onClick={() => location.reload()}>Volver a cargar</button>}</div>;
   return <div className="app-shell"><header className="app-header unified-navbar">
-    <a className="brand" href="#dashboard" onClick={e => { e.preventDefault(); setView('dashboard'); }}><img className="ut-navbar-logo" src={`${import.meta.env.BASE_URL}ut-logo.svg`} width={180} height={34} alt="Universidad Tecnológica de San Juan del Río"/><span className="brand-name">SEAES</span></a>
+    <a className="brand" href="#criteria" title="Ver criterios SEAES" onClick={e => { e.preventDefault(); setView('criteria'); }}><img className="ut-navbar-logo" src={`${import.meta.env.BASE_URL}ut-logo.svg`} width={220} height={46} alt="Universidad Tecnológica de San Juan del Río"/><span className="brand-name">SEAES</span></a>
     <nav aria-label="Secciones">{nav.map(({ id, label }) => <button key={id} className={`nav-item ${view === id ? 'active' : ''}`} aria-current={view === id ? 'page' : undefined} onClick={() => setView(id)}>{label}</button>)}</nav>
     <div className="nav-utilities">
       <select className="nav-filter" aria-label="Filtrar por archivo" title={source?.name ?? 'Todos los archivos'} value={filters.source} onChange={e => updateFilter('source',e.target.value)}><option value="">Todos los archivos</option>{session.sources.map(s=><option key={s.id} value={s.id}>{s.name.slice(0,38)}</option>)}</select>
       <select className="nav-filter nav-index" aria-label="Filtrar por índice" value={filters.indicator} onChange={e => updateFilter('indicator',e.target.value)}><option value="">Todos los índices</option>{[...new Set([...(schema.indicators??[]).map(i=>i.id),...schema.sections.flatMap(s=>s.indicators)])].sort((a,b)=>a-b).map(id=><option key={id} value={id}>Indicador {String(id).padStart(2,'0')}</option>)}</select>
-      {view === 'examples' && <select className="nav-filter nav-context" aria-label="Tipo de referencia" value={referenceKind} onChange={e=>setReferenceKind(e.target.value as ReferenceKind)}><option value="all">Todo el material</option><option value="indicaciones">Indicaciones</option><option value="cambios">Cambios</option><option value="ejemplos">Ejemplos</option></select>}
+      {view === 'indications' && <select className="nav-filter nav-context" aria-label="Tipo de referencia" value={referenceKind} onChange={e=>setReferenceKind(e.target.value as ReferenceKind)}><option value="all">Todo el material</option><option value="indicaciones">Indicaciones</option><option value="cambios">Cambios</option><option value="ejemplos">Ejemplos</option></select>}
       {view === 'indicators' && <select className="nav-filter nav-context" aria-label="Subsección de indicadores" value={indicatorMode} onChange={e=>setIndicatorMode(e.target.value as typeof indicatorMode)}><option value="all">Todos los indicadores</option><option value="masters">Maestría</option></select>}
-      {view === 'annexes' && <select className="nav-filter nav-context" aria-label="Subsección de anexos y rasgos" value={annexMode} onChange={e=>setAnnexMode(e.target.value as typeof annexMode)}><option value="annexes">Anexos</option><option value="rasgos">Rasgos</option></select>}
       {view === 'dashboard' && <><select className="nav-filter nav-context" aria-label="Categoría de gráfica" value={chartDimension} onChange={e=>setChartDimension(e.target.value as Exclude<DashboardDimension,'examples'>)}>{dashboardDimensions.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select><button className="nav-tool" title={chartMode === 'bars' ? 'Mostrar anillo' : 'Mostrar barras'} aria-label="Cambiar tipo de gráfica" onClick={()=>setChartMode(m=>m==='bars'?'donut':'bars')}><BarChart3 size={17}/></button></>}
       <div className="header-search"><SearchField value={query} onChange={setQuery} label="Buscar en sección" placeholder="Buscar…"/></div>
       <button className="nav-tool" onClick={()=>setAdvanced(true)} title="Filtros adicionales" aria-label="Filtros adicionales"><Filter size={18}/></button>
@@ -81,9 +79,11 @@ export function App() {
     <main className="workspace" id="main">
       <div className="feedback" aria-live="polite">{busy && <div className="message processing" role="status"><LoaderCircle size={18} className="spin"/>{busy}</div>}{error && <div className="message error" role="alert"><span>{error}</span><button className="icon-button" aria-label="Cerrar error" onClick={() => workspace.setError('')}><X size={17}/></button></div>}{notice && <div className="message success" role="status"><CheckCircle2 size={17}/><span>{notice}</span><button className="icon-button" aria-label="Cerrar aviso" onClick={() => workspace.setNotice('')}><X size={17}/></button></div>}</div>
       {view === 'dashboard' && <><Dashboard schema={schema} groups={filtered} sources={scopedSources} dimension={chartDimension} onDimension={setChartDimension} mode={chartMode} hideNulls={hideNulls} onImport={importAction} onRecord={group=>setDetailId(group.id)} onRecords={openFiltered}/><FilesScreen schema={schema} sources={session.sources} groups={filtered} busy={busy} globalQuery={query} filteredSourceId={filters.source} onRecords={id=>openRecords({source:id})} onRename={(old,name)=>workspace.setSession(s=>({...s,sources:s.sources.map(item=>item.id===old.id?{...item,name}:item)}))} onDelete={old=>setConfirmation({title:'Eliminar fuente',text:`Se eliminarán «${old.name}» y sus aportaciones de la sesión.`,label:'Eliminar fuente',action:()=>{void workspace.removeSources([old.id]);reset();}})}/></>}
-    {view === 'examples' && <ReferenceScreen schema={schema} kind={referenceKind} query={query} indicator={filters.indicator} sourceName={source?.name} relatedRecords={filtered.length}/>}
+    {view === 'criteria' && <CriteriaScreen schema={schema} groups={filtered} activeCriterion={filters.criterion} onSelect={id => { setFilters(previous => ({ ...previous, criterion: id, groupIds: undefined })); setIndicatorMode('all'); setView('indicators'); }} onClear={() => updateFilter('criterion', '')}/>}
+    {view === 'traits' && <ReferenceScreen schema={schema} kind="all" query={query} indicator={filters.indicator} sourceName={source?.name} isRasgos relatedRecords={filtered.length}/>}
+    {view === 'indications' && <ReferenceScreen schema={schema} kind={referenceKind} query={query} indicator={filters.indicator} sourceName={source?.name} relatedRecords={filtered.length}/>}
     {view === 'indicators' && <section className="section-records"><div className="section-summary"><strong>{indicatorMode==='masters'?'Indicador de maestría':'Indicadores'}</strong><span>{indicatorGroups.length.toLocaleString('es-MX')} registros</span></div><RecordsTable schema={schema} groups={indicatorGroups} sources={session.sources} onDetail={g=>setDetailId(g.id)} onEdit={record=>setEditor({record})} onDelete={deleteRecords}/></section>}
-    {view === 'annexes' && (annexMode==='rasgos' ? <ReferenceScreen schema={schema} kind="all" query={query} indicator={filters.indicator} sourceName={source?.name} isRasgos relatedRecords={filtered.length}/> : <div className="annex-workspace"><AnnexAccordion schema={schema} groups={filtered} activeSheet={annexSheet} onFilter={setAnnexSheet} onRecords={ids=>{const g=groups.find(x=>ids.includes(x.id));setAnnexSheet(g?.section.sheet??null);}}/><div className="section-summary"><strong>Registros de anexos</strong><span>{annexGroups.length.toLocaleString('es-MX')} registros</span></div><RecordsTable schema={schema} groups={annexGroups} sources={session.sources} onDetail={g=>setDetailId(g.id)} onEdit={record=>setEditor({record})} onDelete={deleteRecords}/></div>)}
+    {view === 'annexes' && <div className="annex-workspace"><AnnexAccordion schema={schema} groups={filtered} sources={session.sources} activeSheet={annexSheet} onFilter={setAnnexSheet} onEditRecord={record => setEditor({ record })}/></div>}
     <footer className="workspace-footer"><span>Universidad Tecnológica de San Juan del Río</span><span>SEAES · Procesamiento local</span><span className="theme-credit">Diseño inspirado en <a href="https://templatemo.com/tm-633-celadon" target="_blank" rel="noopener noreferrer">Celadon · TemplateMo</a></span></footer></main>
     {advanced && <Dialog title="Filtros para todas las secciones" onClose={()=>setAdvanced(false)}><div className="dialog-body filter-grid">
       <label>Archivo<select value={filters.source} onChange={e=>updateFilter('source',e.target.value)}><option value="">Todos los archivos</option>{session.sources.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
