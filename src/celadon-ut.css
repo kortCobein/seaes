@@ -460,3 +460,69 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ut-green-dark)}
   .clear-session-button{font-size:11px;padding:6px 8px}
   .header-search{flex-basis:130px}
 }
+
+
+/* SEAES v4: all sections, global filters and actions share exactly one navbar. */
+.app-header.unified-navbar{
+  display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;
+  justify-content:flex-start;gap:10px;padding:11px 16px;
+  min-height:72px;height:auto;max-width:calc(100vw - 24px);
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#B8C6D8 transparent;
+  border-radius:999px;
+}
+.app-header.unified-navbar .brand{flex:0 0 auto;gap:5px;min-width:0}
+.app-header.unified-navbar .ut-navbar-logo{width:137px;height:29px;object-fit:contain}
+.app-header.unified-navbar .brand-name{font-size:14px}
+.app-header.unified-navbar nav{
+  flex:0 0 auto;display:flex;flex-direction:row;flex-wrap:nowrap;
+  order:0;width:auto!important;align-self:center;justify-content:flex-start;
+  margin:0;padding:0;gap:0;
+}
+.app-header.unified-navbar nav .nav-item{flex:0 0 auto;min-height:37px;font-size:12px;padding:7px 11px;white-space:nowrap}
+.app-header.unified-navbar .nav-utilities{display:flex;align-items:center;justify-content:flex-end;flex:1 0 auto;gap:5px;min-width:0}
+.app-header.unified-navbar .nav-filter{
+  display:inline-block;flex:0 0 134px;width:134px;min-width:0;max-width:none;
+  min-height:35px;padding:5px 22px 5px 10px;border-radius:999px;
+  font-size:11px;color:var(--ut-blue);text-overflow:ellipsis;
+  background:#FAFCFF;border:1px solid #CCD7E7;
+}
+.app-header.unified-navbar .nav-index{flex-basis:113px;width:113px}
+.app-header.unified-navbar .nav-context{flex-basis:146px;width:146px}
+.app-header.unified-navbar .header-search{order:0;flex:0 0 124px;width:124px;max-width:none;min-width:0;margin:0}
+.app-header.unified-navbar .search-field{min-height:35px;padding:0 7px}
+.app-header.unified-navbar .search-field input{min-height:33px;font-size:11px}
+.app-header.unified-navbar .search-field svg{width:14px}
+.app-header.unified-navbar .nav-tool{
+  position:relative;flex:0 0 34px;display:grid;place-items:center;
+  width:34px;height:35px;min-height:35px;padding:0;
+  border:1px solid rgba(255,255,255,.74);border-radius:50%;
+  background:var(--celadon-gloss);color:var(--ut-blue);
+  box-shadow:var(--celadon-shadow-sm);cursor:pointer;
+}
+.app-header.unified-navbar .nav-tool>svg{grid-area:1/1}
+.app-header.unified-navbar .nav-tool>svg+svg{align-self:end;justify-self:end;color:var(--ut-blue)}
+.app-header.unified-navbar .nav-tool:hover:not(:disabled){color:var(--ut-green-dark);box-shadow:var(--celadon-well)}
+.app-header.unified-navbar .nav-tool:disabled{opacity:.4;cursor:not-allowed}
+.app-header.unified-navbar .nav-tool.danger-tool:hover:not(:disabled){color:var(--danger)}
+.app-header.unified-navbar .nav-tool:focus-visible,.app-header.unified-navbar .nav-filter:focus-visible{outline:2px solid var(--ut-green);outline-offset:2px}
+.section-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 13px;padding:7px 6px;color:var(--ut-blue)}
+.section-summary strong{font-size:21px;font-weight:600;font-family:'Outfit',sans-serif}
+.section-summary span{font-size:12px;color:var(--muted)}
+.section-records,.annex-workspace{min-width:0}
+.analysis-dashboard{margin-bottom:22px}
+.source-rename{display:flex;flex-direction:column;gap:5px;margin-bottom:18px;font-size:12px;color:var(--ut-blue)}
+.source-rename input{width:100%}
+.filter-grid .nav-hide-nulls{flex-direction:row;align-items:center;gap:9px}
+.filter-grid .nav-hide-nulls input{width:17px;height:17px;margin:0}
+@media(max-width:900px){
+ .app-header.unified-navbar{border-radius:25px;flex-wrap:nowrap;padding:9px 12px;gap:7px;width:calc(100% - 16px)}
+ .app-header.unified-navbar nav{order:0;width:auto!important;margin:0}
+ .app-header.unified-navbar .nav-utilities{order:0;width:auto;flex:1 0 auto;flex-wrap:nowrap}
+ .app-header.unified-navbar .brand{order:0;flex:0 0 auto}
+ .app-header.unified-navbar .header-search{order:0}
+}
+@media(max-width:500px){
+ .app-header.unified-navbar .ut-navbar-logo{width:112px;height:24px}
+ .app-header.unified-navbar .brand-name{font-size:12px}
+ .app-header.unified-navbar nav .nav-item{font-size:11px;padding:7px 9px}
+}
