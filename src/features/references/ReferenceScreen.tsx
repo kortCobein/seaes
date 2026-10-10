@@ -40,7 +40,7 @@ export function ReferenceScreen({ schema, kind, query, indicator, sourceName, is
     </p>}
     <div className="reference-grid">{references.map(item => <button key={item.name} type="button" className="reference-tile" onClick={() => setSelected(item)}>
       <span className="reference-symbol"><BookOpen size={20}/></span>
-      <span className="reference-description"><strong>{item.name}</strong><small>{item.text.slice(0,155).replace(/\\s+/g,' ')}{item.text.length > 155 ? '…' : ''}</small></span><ArrowUpRight size={16} aria-hidden="true"/>
+      <span className="reference-description"><strong>{item.name}</strong><small>{item.text.slice(0,155).replace(/\s+/g,' ')}{item.text.length > 155 ? '…' : ''}</small></span><ArrowUpRight size={16} aria-hidden="true"/>
     </button>)}</div>
     {!references.length && <div className="quiet-empty"><FileText size={24}/><p>No hay documentos que coincidan con estos filtros.</p></div>}
     {selected && <Dialog title={selected.name} onClose={() => setSelected(undefined)} wide><div className="analysis-reference-text">{selected.text}</div></Dialog>}
