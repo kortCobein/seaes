@@ -1,66 +1,88 @@
 import { useMemo, useState } from 'react';
-import { ArrowUpRight, Filter, Layers3, X } from 'lucide-react';
-import type { RecordGroup, SectionSchema, WorkbookSchema } from '../../models/types';
+import { FileSpreadsheet, Layers3, Pencil } from 'lucide-react';
+import type { DataSource, RecordGroup, SeaesRecord, SectionSchema, WorkbookSchema } from '../../models/types';
+import { hasValue } from '../../services/consolidation';
 import './annex.css';
 
-interface AnnexCard {
-  sheet: string;
-  sections: SectionSchema[];
-  records: RecordGroup[];
-}
+interface AnnexCard { sheet: string; sections: SectionSchema[]; groups: RecordGroup[] }
+interface Contribution { record: SeaesRecord; group: RecordGroup; name: string }
 
-export function AnnexAccordion({ schema, groups, activeSheet, onFilter, onRecords }: {
+export function AnnexAccordion({ schema, groups, sources, activeSheet, onFilter, onEditRecord }: {
   schema: WorkbookSchema;
   groups: RecordGroup[];
+  sources: DataSource[];
   activeSheet: string | null;
   onFilter: (sheet: string | null) => void;
-  onRecords: (ids: string[]) => void;
+  onEditRecord: (record: SeaesRecord) => void;
 }) {
   const annexes = useMemo(() => {
     const bySheet = new Map<string, AnnexCard>();
-    for (const section of schema.sections.filter(item => item.kind === 'annex')) {
-      const card = bySheet.get(section.sheet) ?? { sheet: section.sheet, sections: [], records: [] };
+    for (const section of schema.sections.filter(section => section.kind === 'annex')) {
+      const card = bySheet.get(section.sheet) ?? { sheet: section.sheet, sections: [], groups: [] };
       card.sections.push(section);
       bySheet.set(section.sheet, card);
     }
-    for (const group of groups) {
-      if (group.section.kind === 'annex') bySheet.get(group.section.sheet)?.records.push(group);
-    }
+    for (const group of groups) if (group.section.kind === 'annex') bySheet.get(group.section.sheet)?.groups.push(group);
     return [...bySheet.values()];
   }, [schema.sections, groups]);
-  const [expanded, setExpanded] = useState(() => annexes[0]?.sheet ?? '');
+  const [expanded, setExpanded] = useState('');
+  const [selectedBySheet, setSelectedBySheet] = useState<Record<string, string>>({});
+  const sourceNames = useMemo(() => new Map(sources.map(source => [source.id, source.name])), [sources]);
   if (!annexes.length) return null;
 
-  return <section className="annex-section" aria-label="Explorador de anexos">
-    <div className="annex-section-heading">
-      <div><h2>Anexos</h2><p>Selecciona una tarjeta para revisar el anexo y filtrar sus registros.</p></div>
-      {activeSheet && <button type="button" className="button text small" onClick={() => onFilter(null)}><X size={15}/>Quitar filtro de anexos</button>}
-    </div>
-    <div className="annex-slabrow" aria-label="Anexos de la plantilla SEAES">
+  return <section className="annex-section" aria-label="Anexos de SEAES">
+    <div className="annex-slabrow">
       {annexes.map((annex, index) => {
-        const isOpen = expanded === annex.sheet;
-        const isFiltered = activeSheet === annex.sheet;
+        const open = (expanded || annexes[0]?.sheet) === annex.sheet;
+        const contributions: Contribution[] = annex.groups.flatMap(group => group.records.map(record => ({
+          record, group, name: sourceNames.get(record.sourceId) ?? 'Fuente no disponible'
+        }))).sort((a,b) => a.name.localeCompare(b.name, 'es-MX'));
+        const contributors = [...new Set(contributions.map(item => item.record.sourceId))];
+        const selectedSource = selectedBySheet[annex.sheet] && contributors.includes(selectedBySheet[annex.sheet])
+          ? selectedBySheet[annex.sheet] : contributors[0];
+        const shown = contributions.filter(item => item.record.sourceId === selectedSource);
         const label = annex.sheet;
-        const description = [...new Set(annex.sections.map(section => section.label).filter(Boolean))].join(' · ');
-        const indicators = new Set(annex.sections.flatMap(section => section.indicators)).size;
-        return <div key={annex.sheet} className={`annex-stave${isOpen ? ' open' : ''}${isFiltered ? ' filtered' : ''}`}>
-          <button type="button" className="annex-spine" aria-expanded={isOpen} aria-controls={`annex-detail-${index}`} onClick={() => setExpanded(annex.sheet)} title={label}>
+        const description = [...new Set(annex.sections.map(s => s.label).filter(Boolean))].join(' · ');
+        return <div key={annex.sheet} className={`annex-stave${open ? ' open' : ''}${activeSheet === annex.sheet ? ' filtered' : ''}`}>
+          <button className="annex-spine" type="button" aria-expanded={open} aria-controls={`annex-detail-${index}`}
+            onClick={() => { setExpanded(annex.sheet); onFilter(annex.sheet); }}>
             <span className="annex-pip" aria-hidden="true"/><span className="annex-spine-label">{label}</span>
           </button>
-          <div id={`annex-detail-${index}`} className="annex-body" hidden={!isOpen}>
-            <span className="annex-tile"><Layers3 size={25}/></span>
-            <span className="annex-eyebrow">ANEXO SEAES · {index + 1} / {annexes.length}</span>
-            <h3 title={label}>{label}</h3>
-            <p title={description}>{description || 'Sección de anexos de la plantilla institucional.'}</p>
-            <div className="annex-proof"><strong>{annex.records.length.toLocaleString('es-MX')}</strong> registros · {annex.sections.length} secciones · {indicators} indicadores</div>
-            <div className="annex-actions">
-              <button type="button" className={`button ${isFiltered ? 'secondary' : 'primary'} small`} onClick={() => onFilter(isFiltered ? null : annex.sheet)}>
-                {isFiltered ? <X size={15}/> : <Filter size={15}/>}
-                {isFiltered ? 'Quitar filtro' : 'Filtrar gráfica'}
-              </button>
-              <button type="button" className="button secondary small" disabled={!annex.records.length} onClick={() => onRecords(annex.records.map(group => group.id))}>
-                Ver registros <ArrowUpRight size={15}/>
-              </button>
+          <div id={`annex-detail-${index}`} className="annex-body" hidden={!open}>
+            <div className="annex-card-header">
+              <div className="annex-heading-icon"><Layers3 size={22}/></div>
+              <div><small>ANEXO {index + 1} DE {annexes.length}</small><h3>{label}</h3></div>
+              <span className="annex-count">{contributors.length} {contributors.length === 1 ? 'fuente' : 'fuentes'}</span>
+            </div>
+            {description && <p className="annex-description" title={description}>{description}</p>}
+            <div className="annex-contribution-layout">
+              <div className="annex-source-menu" role="group" aria-label={`Fuentes del ${label}`}>
+                <strong>APORTACIONES</strong>
+                {contributors.map(sourceId => {
+                  const count = contributions.filter(entry => entry.record.sourceId === sourceId).length;
+                  return <button key={sourceId} type="button" className={`annex-source-option${selectedSource === sourceId ? ' selected' : ''}`}
+                    aria-pressed={selectedSource === sourceId} title={sourceNames.get(sourceId) ?? sourceId}
+                    onClick={() => setSelectedBySheet(current => ({ ...current, [annex.sheet]: sourceId }))}>
+                    <FileSpreadsheet size={16}/><span>{sourceNames.get(sourceId) ?? 'Fuente'}</span><small>{count}</small>
+                  </button>;
+                })}
+                {!contributors.length && <span className="annex-no-data">Sin aportaciones</span>}
+              </div>
+              <div className="annex-contribution-preview" aria-live="polite">
+                {shown.length ? shown.map(({ record, group }, recordIndex) => {
+                  const entries = group.section.fields.filter(field => hasValue(record.values[field.id]))
+                    .map(field => ({ label: field.label, value: String(record.values[field.id]) }));
+                  return <article className="annex-record-preview" key={record.id}>
+                    <div className="annex-record-heading"><strong>Registro {recordIndex + 1}</strong>
+                      <button type="button" className="annex-edit" title="Editar este registro" onClick={() => onEditRecord(record)}><Pencil size={14}/>Editar</button>
+                    </div>
+                    <small className="annex-record-section">{group.section.label}</small>
+                    {entries.length ? <dl className="annex-data-fields">{entries.map((field, i) =>
+                      <div key={i}><dt>{field.label}</dt><dd>{field.value}</dd></div>
+                    )}</dl> : <p className="annex-no-data">Sin campos capturados.</p>}
+                  </article>;
+                }) : <p className="annex-no-data">Selecciona un archivo para consultar su aportación en este anexo.</p>}
+              </div>
             </div>
           </div>
         </div>;
