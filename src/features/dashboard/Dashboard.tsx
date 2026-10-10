@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, BarChart3, BookOpen, ChevronLeft, ChevronRight, Filter, FlaskConical, PieChart, Search, Upload, X } from 'lucide-react';
 import { Dialog } from '../../components/Dialog';
+import { ExcelIcon } from '../../components/ExcelIcon';
 import type { DataSource, RecordGroup, WorkbookSchema } from '../../models/types';
 import { normalize, recordLabel } from '../../services/consolidation';
 import {
@@ -168,7 +169,7 @@ export function Dashboard({ schema, groups, sources, busy, onImport, onDemo, onR
   return <div className="analysis-dashboard">
     {!!groups.length && <div className="analysis-kpis" aria-label="Resumen global">
       <button onClick={() => onRecords({})}><span>Registros</span><strong>{number(metrics.records)}</strong></button>
-      <button onClick={() => setDimension('sources')}><span>Fuentes</span><strong>{number(metrics.sources)}</strong></button>
+      <button onClick={() => setDimension('sources')}><span className="kpi-heading"><ExcelIcon size={24}/>Fuentes</span><strong>{number(metrics.sources)}</strong></button>
       <button onClick={() => setDimension('coverage')}><span>Cobertura</span><strong>{metrics.coverage.percentage}<small>%</small></strong></button>
       <button onClick={() => setDimension('indicators')}><span>Indicadores con datos</span><strong>{metrics.indicatorsWithData}<small> / {metrics.indicatorsTotal}</small></strong></button>
       <button onClick={() => { setDimension('conflicts'); setFilters({}); }}><span>Conflictos pendientes</span><strong className={metrics.conflicts ? 'analysis-attention' : ''}>{number(metrics.conflicts)}</strong></button>

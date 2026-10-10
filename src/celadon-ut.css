@@ -321,3 +321,56 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ut-green-dark)}
 @media(forced-colors:active){
   .panel,.analysis-kpis>button,.button,.app-header{border:1px solid ButtonText!important}
 }
+
+
+/* Final audit: shared glass Excel identity and Celadon styling for secondary flows. */
+.brand-mark,.loading-screen .brand-mark{
+  background:none;border:0;border-radius:0;box-shadow:none;overflow:visible;
+}
+.brand-mark .excel-file-icon,.loading-screen .brand-mark .excel-file-icon{
+  display:block;object-fit:contain;filter:drop-shadow(0 5px 8px rgba(0,119,98,.24));
+}
+.sources-heading,.kpi-heading{
+  display:inline-flex!important;flex-direction:row;align-items:center;gap:9px;
+}
+.sources-heading{color:var(--ut-blue);margin:0}
+.analysis-kpis>button>span.kpi-heading{
+  display:flex;align-items:center;gap:9px;min-height:28px;margin-bottom:7px;
+}
+.analysis-kpis .kpi-heading .excel-file-icon{filter:drop-shadow(0 2px 3px rgba(0,119,98,.2))}
+.files-panel .panel-heading .button-row{gap:11px;flex-wrap:wrap}
+.files-table .source-title{display:inline-flex;align-items:center;gap:12px;max-width:100%;min-height:35px}
+.files-table .source-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.files-table .cell-subtitle{padding-left:41px;max-width:min(440px,80vw)}
+.files-table tbody td:nth-child(2),.files-table tbody td:nth-child(3){font-variant-numeric:tabular-nums}
+.loading-screen{background:transparent}
+.loading-screen .brand-mark{width:66px;height:66px}
+.loading-screen .brand-mark .excel-file-icon{width:66px!important;height:66px!important}
+.analysis-reference-list button,.analysis-missing-list button{
+  border-radius:15px;background:linear-gradient(155deg,#FFFFFF,var(--celadon-plate));
+  border:1px solid rgba(255,255,255,.7);box-shadow:var(--celadon-shadow-sm);
+  transition:box-shadow .2s,transform .2s,background .2s;
+}
+.analysis-reference-list button:hover,.analysis-missing-list button:hover{
+  transform:translateY(-2px);background:linear-gradient(145deg,#F8FFFC,#E7F1FD);
+  box-shadow:var(--celadon-shadow);
+}
+.analysis-detail-table,.detail-table{border-radius:17px;overflow:auto}
+.verification-list,.record-metadata,.compact-disclosure{
+  border:1px solid rgba(255,255,255,.75);
+  border-radius:18px;background:linear-gradient(155deg,#FFFFFF,var(--celadon-plate));
+  box-shadow:var(--celadon-shadow-sm);
+}
+.compact-disclosure>summary{color:var(--ut-blue);border-radius:16px}
+.compact-disclosure[open]>summary{color:var(--ut-green-dark)}
+.record-origin-panel,.record-conflicts{min-width:0}
+.table-options-content,.menu-content{overflow-wrap:anywhere}
+@media(max-width:760px){
+  .analysis-kpis .kpi-heading .excel-file-icon{width:22px!important;height:22px!important}
+  .files-table .cell-subtitle{padding-left:0}
+  .sources-heading{font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){
+  .analysis-reference-list button,.analysis-missing-list button{transition:none}
+  .analysis-reference-list button:hover,.analysis-missing-list button:hover{transform:none}
+}

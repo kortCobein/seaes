@@ -31,7 +31,7 @@ Las correcciones recuperadas del `dist` del 10 de octubre de 2026 están impleme
 `tests/consolidation.test.ts` protege estas reglas; las pruebas de integración verifican importación y exportación con los libros del proyecto. `UX-CONTRACT.md` describe la navegación y las interacciones.
 
 ## Tema Celadon UT
-`src/celadon-ut.css` adapta el relieve, los paneles claros, el encabezado flotante, los botones y las tablas de [Celadon (TemplateMo)](https://templatemo.com/tm-633-celadon). Los blancos y grises suaves de la plantilla se conservan y los acentos se distribuyen entre verde UT (`#009D81`) y azul UT (`#00245A`). La atribución de TemplateMo permanece en el pie de página. El icono de Excel del proyecto está en `public/excel-icon.webp`.
+`src/celadon-ut.css` adapta el relieve, los paneles claros, el encabezado flotante, los botones y las tablas de [Celadon (TemplateMo)](https://templatemo.com/tm-633-celadon). Los blancos y grises suaves de la plantilla se conservan y los acentos se distribuyen entre verde UT (`#009D81`) y azul UT (`#00245A`). La atribución de TemplateMo permanece en el pie de página. El icono de Excel del proyecto está en `public/excel-glass.svg`.
 
 ## Importaciones duplicadas
 Cada Excel obtiene una huella SHA-256 del contenido binario. Una importación idéntica se omite antes de consolidar, aunque tenga otro nombre o ya estuviera guardada en una sesión anterior con su original disponible. Dos fuentes diferentes con el mismo número siguen siendo aportaciones independientes.
