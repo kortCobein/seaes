@@ -4,7 +4,7 @@ import type { SeaesRecord } from './models/types';
 import { consolidate } from './services/consolidation';
 import { useWorkspace } from './hooks/useWorkspace';
 import { Dashboard, dashboardDimensions } from './features/dashboard/Dashboard';
-import type { DashboardDimension, DashboardRecordFilter } from './features/dashboard/analytics';
+import { recordProgrammes, type DashboardDimension, type DashboardRecordFilter } from './features/dashboard/analytics';
 import { ReferenceScreen, type ReferenceKind } from './features/references/ReferenceScreen';
 import { CriteriaScreen } from './features/references/CriteriaScreen';
 import { AnnexAccordion } from './features/dashboard/AnnexAccordion';
@@ -49,7 +49,7 @@ export function App() {
   const updateFilter = (key: keyof Filters, value: string) => setFilters(previous => ({ ...previous, [key]: value, groupIds: undefined }));
   const source = session.sources.find(item => item.id === filters.source);
   const scopedSources = session.sources.filter(item => !filters.source || item.id === filters.source);
-  const isMaster = (g: (typeof groups)[number]) => /maestr[ií]a|posgrado/i.test([g.section.sheet, g.section.label, ...g.section.indicators.map(id => schema?.indicators?.find(v => v.id === id)?.label ?? '')].join(' '));
+  const isMaster = (g: (typeof groups)[number]) => /maestr[ií]a|posgrado/i.test([g.section.sheet, g.section.label, ...recordProgrammes(g), ...g.section.indicators.map(id => schema?.indicators?.find(v => v.id === id)?.label ?? ''), ...g.sourceIds.map(id => session.sources.find(s => s.id === id)?.name ?? ''), ...g.section.fields.filter(field => field.type === 'text' && /grado|nivel|programa/i.test(field.label)).map(field => String(g.resolved.values[field.id] ?? ''))].join(' '));
   const indicatorGroups = filtered.filter(g => g.section.kind !== 'annex' && (indicatorMode === 'all' || isMaster(g)));
   const openFiltered = (next: DashboardRecordFilter) => { setFilters(previous => ({ ...previous, groupIds: next.groupIds, source: next.source ?? previous.source, indicator: next.indicator ?? previous.indicator, status: next.status && next.status !== 'all' ? next.status : previous.status })); setView(next.groupIds?.length && next.groupIds.every(id => groups.find(g => g.id === id)?.section.kind === 'annex') ? 'annexes' : 'indicators'); setAnnexSheet(null); setIndicatorMode('all'); };
   const clearSession = () => setConfirmation({ title: 'Limpiar sesión', text: 'Se eliminarán todas las fuentes, capturas y decisiones del navegador. No se puede deshacer.', label: 'Limpiar sesión', action: () => { void workspace.clearSession(); reset(); setView('dashboard'); } });
