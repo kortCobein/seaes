@@ -124,3 +124,19 @@
   .analysis-detail-footer { flex-wrap: wrap; }
   .analysis-empty .button-row { justify-content: center; }
 }
+
+
+/* Two compact columns keep twenty or more categories on screen without a long list. */
+.analysis-bars{padding:3px 22px 20px}
+.analysis-bar-scroll{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 20px;max-height:none;overflow:visible;
+  padding:0;scrollbar-gutter:auto
+}
+.analysis-bar{min-width:0;min-height:43px;grid-template-columns:minmax(94px,30%) minmax(28px,1fr) 45px 14px;gap:8px;padding:8px 5px}
+.analysis-bar-label{min-width:0}
+.analysis-bar-track{min-width:0}
+@media(max-width:900px){
+  .analysis-bar-scroll{grid-template-columns:minmax(0,1fr);max-height:475px;overflow-y:auto;scrollbar-gutter:stable}
+  .analysis-bars{padding:3px 12px 16px}
+}
