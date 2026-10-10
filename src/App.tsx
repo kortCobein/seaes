@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Files, LayoutDashboard, LoaderCircle, Plus, Rows3, ShieldCheck, X } from 'lucide-react';
+import { CheckCircle2, LoaderCircle, Plus, ShieldCheck, X } from 'lucide-react';
 import type { SeaesRecord } from './models/types';
 import { consolidate } from './services/consolidation';
 import { useWorkspace } from './hooks/useWorkspace';
@@ -16,7 +16,7 @@ import { RecordDetail } from './components/RecordDetail';
 import { SearchField } from './components/SearchField';
 import { ExcelIcon } from './components/ExcelIcon';
 
-const nav = [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }, { id: 'records', label: 'Registros', icon: Rows3 }, { id: 'files', label: 'Archivos', icon: Files }] as const;
+const nav = [{ id: 'dashboard', label: 'Dashboard' }, { id: 'records', label: 'Registros' }, { id: 'files', label: 'Archivos' }] as const;
 type View = typeof nav[number]['id'];
 const stateKey = `seaes-ui-v2:${location.pathname}`;
 function loadUI(): { view: View; query: string; filters: Filters } {
@@ -40,7 +40,7 @@ export function App() {
   const deleteRecords = (records: SeaesRecord[]) => setConfirmation({ title: 'Eliminar registros', text: `Se eliminarán ${records.length} aportaciones de la sesión. Los archivos originales se conservan.`, label: 'Eliminar registros', action: () => { workspace.deleteRecords(records); setDetailId(undefined); } });
   const importAction = () => { setView('files'); setImporting(true); };
   if (!schema || !ready) return <div className="loading-screen"><div className="brand-mark"><ExcelIcon size={46}/></div><h1>SEAES · UTSJR</h1>{busy && <LoaderCircle className="spin"/>}<p role={error ? 'alert' : 'status'}>{busy || error}</p>{!busy && <button className="button primary" onClick={() => location.reload()}>Volver a cargar</button>}</div>;
-  return <div className="app-shell"><header className="app-header"><a className="brand" href="#dashboard" onClick={event => { event.preventDefault(); setView('dashboard'); }}><span className="brand-mark"><ExcelIcon size={44}/></span><span>SEAES <strong>UTSJR</strong></span></a><nav aria-label="Principal">{nav.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${view === id ? 'active' : ''}`} aria-current={view === id ? 'page' : undefined} onClick={() => setView(id)}><Icon size={18}/>{label}</button>)}</nav><div className="header-search"><SearchField value={query} onChange={value => { setQuery(value); if (value) { setFilters({ ...cleanFilters }); setView('records'); } }} label="Buscar en todo el consolidado" placeholder="Buscar en el consolidado…"/></div></header>
+  return <div className="app-shell"><header className="app-header"><a className="brand" href="#dashboard" onClick={event => { event.preventDefault(); setView('dashboard'); }}><span className="brand-mark"><ExcelIcon size={44}/></span><span>SEAES <strong>UTSJR</strong></span></a><nav aria-label="Principal">{nav.map(({ id, label }) => <button key={id} className={`nav-item ${view === id ? 'active' : ''}`} aria-current={view === id ? 'page' : undefined} onClick={() => setView(id)}>{label}</button>)}</nav><div className="header-search"><SearchField value={query} onChange={value => { setQuery(value); if (value) { setFilters({ ...cleanFilters }); setView('records'); } }} label="Buscar en todo el consolidado" placeholder="Buscar en el consolidado…"/></div></header>
     <main className="workspace" id="main"><div className="page-heading"><div><span className="eyebrow">EVALUACIÓN INSTITUCIONAL · CAI 2026</span><h1>{nav.find(n => n.id === view)?.label}{demoSources.length > 0 && <span className="badge demo">Datos ficticios</span>}</h1></div><div className="local-state" title="Los datos se guardan en este navegador"><ShieldCheck size={16}/><span>{workspace.saved ? 'Sesión guardada' : 'Guardando…'}</span></div></div>
     <div className="feedback" aria-live="polite">{busy && <div className="message processing" role="status"><LoaderCircle size={18} className="spin"/>{busy}</div>}{error && <div className="message error" role="alert"><span>{error}</span><button className="icon-button" aria-label="Cerrar error" onClick={() => workspace.setError('')}><X size={17}/></button></div>}{notice && <div className="message success" role="status"><CheckCircle2 size={17}/><span>{notice}</span><button className="icon-button" aria-label="Cerrar aviso" onClick={() => workspace.setNotice('')}><X size={17}/></button></div>}</div>
     {view === 'dashboard' && <Dashboard schema={schema} groups={groups} sources={session.sources} busy={busy} onImport={importAction} onDemo={() => void workspace.useDemo()} onRecord={group => setDetailId(group.id)} onRecords={next => openRecords(next)}/>}
