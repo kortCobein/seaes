@@ -38,8 +38,8 @@ export function App() {
   const [referenceKind, setReferenceKind] = useState<ReferenceKind>('all');
   const [indicatorMode, setIndicatorMode] = useState<'all' | 'masters'>('all');
   const [chartDimension, setChartDimension] = useState<Exclude<DashboardDimension, 'examples'>>('all');
-  const [hideNulls, setHideNulls] = useState(() => { try { return localStorage.getItem('seaes-hide-nulls') !== 'false'; } catch { return true; } });
-  useEffect(() => { try { localStorage.setItem('seaes-hide-nulls', String(hideNulls)); } catch { /* Optional display preference. */ } }, [hideNulls]);
+  const [hideNulls, setHideNulls] = useState(() => { try { return localStorage.getItem('seaes-hide-nulls-v2') !== 'false'; } catch { return true; } });
+  useEffect(() => { try { localStorage.setItem('seaes-hide-nulls-v2', String(hideNulls)); } catch { /* Optional display preference. */ } }, [hideNulls]);
   const [showSearch, setShowSearch] = useState(false);
   const [confirmation, setConfirmation] = useState<{ title: string; text: string; action: () => void; label: string }>();
   useEffect(() => { try { sessionStorage.setItem(stateKey, JSON.stringify({ view, query, filters })); } catch { /* UI preferences are optional; session data has its own error feedback. */ } }, [view, query, filters]);
