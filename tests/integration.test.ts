@@ -129,7 +129,10 @@ test('consolidación suma automáticamente aportaciones cuantitativas, ignora te
 
   const complementary = consolidate([first, record('B', { [b.id]: 20 })], schema);
   assert.equal(complementary[0].status, 'complementary');
-  assert.deepEqual(complementary[0].resolved.values, { [a.id]: 10, [b.id]: 20 });
+  assert.equal(complementary[0].resolved.values[a.id], 10);
+  assert.equal(complementary[0].resolved.values[b.id], 20);
+  assert.ok(section.fields.filter(field => field.type === 'number' && row.fields[field.id] && ![a.id, b.id].includes(field.id))
+    .every(field => complementary[0].resolved.values[field.id] === 0), 'Los numéricos omitidos de una fila activa son cero');
 
   const aggregated = consolidate([first, record('B', { [a.id]: 20 })], schema)[0];
   assert.equal(aggregated.resolved.values[a.id], 30);
@@ -160,7 +163,7 @@ test('consolidación suma automáticamente aportaciones cuantitativas, ignora te
   assert.equal(identity.resolved.values[institution.id], 'Universidad Tecnológica de San Juan del Río');
   assert.equal(identity.conflicts.length, 0);
 
-  assert.equal(coverage(complementary, schema).filled, 2);
+  assert.equal(coverage(complementary, schema).filled, section.fields.filter(field => field.type === 'number' && row.fields[field.id]).length);
   assert.equal(normalize('  ÁREA   Académica '), 'area academica');
 });
 
