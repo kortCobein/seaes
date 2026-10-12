@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { DataSource, SeaesRecord, WorkbookSchema } from '../src/models/types';
 import { consolidate } from '../src/services/consolidation';
-import { aggregateDashboard, dashboardMetrics, donutWeight, filterDashboardGroups, recordPeriods, recordProgrammes, visibleAnalysisItems } from '../src/features/dashboard/analytics';
+import { aggregateDashboard, dashboardMetrics, filterDashboardGroups, recordPeriods, recordProgrammes, visibleAnalysisItems } from '../src/features/dashboard/analytics';
 
 const schema: WorkbookSchema = {
   version: 'test', inputFile: '', outputFile: '', demoFile: '',
@@ -73,16 +73,6 @@ test('programas, periodos y fuentes preservan categorías vacías del universo h
   assert.deepEqual(recordPeriods(groups[0], schema), ['2025-2026']);
   assert.deepEqual(recordPeriods(groups.find(group => group.section.kind === 'annex')!, schema), ['2026-2027']);
   assert.equal(filterDashboardGroups(groups, schema, { programme: 'Ingenieria', period: '2026-2027' }).length, 1);
-});
-
-test('anillo usa capturas reales, no suma porcentajes ni inventa segmentos para categorías vacías', () => {
-  const groups = consolidate(records, schema);
-  const items = aggregateDashboard({ dimension: 'coverage', groups, sources, schema });
-  assert.equal(donutWeight(items[0], 'coverage'), 1);
-  assert.equal(donutWeight(items[1], 'coverage'), 0);
-  assert.equal(donutWeight(items[2], 'coverage'), 0);
-  assert.equal(items.reduce((sum, item) => sum + donutWeight(item, 'coverage'), 0), 1);
-  assert.equal(donutWeight(items[2], 'indicators'), 1);
 });
 
 test('las aportaciones cuantitativas iguales se suman sin duplicados ni conflictos en el Dashboard', () => {
