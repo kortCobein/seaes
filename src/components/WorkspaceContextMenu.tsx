@@ -14,8 +14,8 @@ export function WorkspaceContextMenu({ hideNulls, setHideNulls, onFilters, onRes
     const open = (event: MouseEvent) => {
       if (event.ctrlKey) return; // Ctrl+click derecho mantiene el menú nativo del navegador.
       event.preventDefault();
-      const width = Math.min(340, window.innerWidth - 16);
-      const height = Math.min(570, window.innerHeight - 16);
+      const width = Math.min(370, window.innerWidth - 16);
+      const height = Math.min(640, window.innerHeight - 16);
       setPoint({ x: Math.max(8, Math.min(event.clientX, window.innerWidth - width - 8)),
         y: Math.max(8, Math.min(event.clientY, window.innerHeight - height - 8)) });
     };
