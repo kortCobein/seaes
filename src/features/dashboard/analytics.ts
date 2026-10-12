@@ -89,7 +89,7 @@ export function aggregateDashboard({ dimension, groups, universe = groups, sourc
     return {
       id, label, groups: matches, coverage: amount,
       description: options.description, period: options.period,
-      value: dimension === 'all' || dimension === 'coverage' ? amount.percentage : matches.length,
+      value: dimension === 'all' || dimension === 'coverage' ? amount.percentage : matches.reduce((total, group) => total + group.records.length, 0),
       // A captured numerical zero is information. Percentage alone cannot distinguish it from absence.
       hasData: matches.some(group => group.section.fields.some(field => hasValue(group.resolved.values[field.id]))),
     };
