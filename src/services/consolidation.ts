@@ -58,7 +58,18 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
         }
         continue;
       }
-      if (!candidates.length) continue;
+      if (!candidates.length) {
+        // Una fila activa tiene información: sus magnitudes numéricas sin captura
+        // equivalen a cero, NO a nulo. Una fila enteramente vacía ya se descartó
+        // con fieldCount(record) en la entrada. Solo completar celdas que pertenecen
+        // a esta fila, sin tocar los valores originales de cada fuente.
+        const row = section.rows.find(item => item.id === members[0].rowId);
+        if (section.kind === 'quantitative' && field.type === 'number'
+          && (!row || !!row.fields[field.id])) {
+          values[field.id] = 0;
+        }
+        continue;
+      }
 
       const different = candidates.some(c => !same(c.value, candidates[0].value));
       const selected = candidates.find(c => c.recordId === decision?.recordId) ?? candidates[0];

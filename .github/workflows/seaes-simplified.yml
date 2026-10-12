@@ -1,0 +1,33 @@
+name: Validar simplificacion SEAES y nulos
+on:
+  push:
+    branches: [style/seaes-simplificacion-contextual]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Compilar TypeScript y Vite
+        run: npm run build
+      - name: Ejecutar pruebas
+        run: npm test
+      - name: Verificar dist
+        run: |
+          test -s dist/index.html
+          test -d dist/assets
+          test -d dist/data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seaes-simplificado-dist
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error

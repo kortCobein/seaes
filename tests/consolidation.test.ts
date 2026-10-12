@@ -68,6 +68,25 @@ test('cero capturado sigue siendo un dato y no se confunde con ausencia ni No di
   assert.deepEqual(consolidate([record('empty', 'quantitative', { total: null })], schema), []);
 });
 
+test('fila enteramente vacía es nula, fila parcialmente capturada convierte numéricos vacíos en cero', () => {
+  const section = schema.sections.find(s => s.id === 'quantitative')!;
+  const enriched: WorkbookSchema = { ...schema, sections: schema.sections.map(s => s.id !== section.id ? s : {
+    ...s, fields: [...s.fields, { id: 'social', label: 'Compromiso social', type: 'number' as const }],
+  }) };
+  const empty = record('empty', 'quantitative', { total: null, social: '', comments: null });
+  assert.equal(consolidate([empty], enriched).length, 0);
+  const partial = record('partial', 'quantitative', { total: 12, social: null, comments: '' });
+  const copy = JSON.stringify(partial);
+  const groups = consolidate([partial], enriched);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].resolved.values.total, 12);
+  assert.equal(groups[0].resolved.values.social, 0);
+  assert.equal(Object.hasOwn(groups[0].resolved.values, 'comments'), false);
+  assert.equal(JSON.stringify(partial), copy);
+  const explicitZero = consolidate([record('zero', 'quantitative', { total: 0, social: '' })], enriched);
+  assert.equal(explicitZero[0].resolved.values.social, 0);
+});
+
 test('texto accidental no contamina la suma y los valores originales permanecen disponibles', () => {
   const records = [record('A', 'quantitative', { total: 'captura incorrecta' }), record('B', 'quantitative', { total: 12 })];
   const before = JSON.stringify(records);

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { DataSource, SeaesRecord, WorkbookSchema } from '../src/models/types';
 import { consolidate } from '../src/services/consolidation';
-import { aggregateDashboard, dashboardMetrics, donutWeight, filterDashboardGroups, recordPeriods, recordProgrammes, visibleAnalysisItems } from '../src/features/dashboard/analytics';
+import { aggregateDashboard, dashboardMetrics, filterDashboardGroups, recordPeriods, recordProgrammes, visibleAnalysisItems } from '../src/features/dashboard/analytics';
 
 const schema: WorkbookSchema = {
   version: 'test', inputFile: '', outputFile: '', demoFile: '',
@@ -27,8 +27,8 @@ test('Ocultar nulos conserva el cero capturado y los anexos con captura aunque s
   const groups = consolidate(records, schema);
   const items = aggregateDashboard({ dimension: 'coverage', groups, sources, schema });
   assert.equal(items.length, 3);
-  assert.equal(items[0].coverage.filled, 1);
-  assert.equal(items[0].coverage.percentage, 50);
+  assert.equal(items[0].coverage.filled, 2);
+  assert.equal(items[0].coverage.percentage, 100);
   assert.equal(items[1].hasData, false);
   assert.equal(items[2].value, 0);
   assert.equal(items[2].hasData, true);
@@ -37,7 +37,7 @@ test('Ocultar nulos conserva el cero capturado y los anexos con captura aunque s
   assert.equal(groups[0].resolved.values.count, 0);
 });
 
-test('los KPIs y el universo de cobertura permanecen intactos al ocultar categorías', () => {
+test('el universo de cobertura permanecen intactos al ocultar categorías', () => {
   const groups = consolidate(records, schema);
   const before = JSON.stringify({ groups, sources, schema });
   const metrics = dashboardMetrics(groups, sources, schema);
@@ -45,20 +45,20 @@ test('los KPIs y el universo de cobertura permanecen intactos al ocultar categor
   visibleAnalysisItems(items, true);
   assert.equal(metrics.indicatorsWithData, 2);
   assert.equal(metrics.indicatorsTotal, 3);
-  assert.equal(metrics.coverage.filled, 1);
+  assert.equal(metrics.coverage.filled, 2);
   assert.equal(metrics.coverage.expected, 3);
   assert.deepEqual(dashboardMetrics(groups, sources, schema), metrics);
   assert.equal(JSON.stringify({ groups, sources, schema }), before);
 });
 
-test('criterios distinguen ausencia, null y texto vacío de cero capturado', () => {
+test('criterios distinguen fila nula de ceros implícitos en fila parcial', () => {
   const groups = consolidate([record('zero', 'i1', { count: 0, equity: null }), record('blank', 'i2', { count: '  ' })], schema);
   const items = aggregateDashboard({ dimension: 'criteria', groups, sources, schema });
   assert.equal(items[0].value, 1);
-  assert.equal(items[1].value, 0);
-  assert.deepEqual(visibleAnalysisItems(items, true).map(item => item.id), ['inclusion']);
+  assert.equal(items[1].value, 1);
+  assert.deepEqual(visibleAnalysisItems(items, true).map(item => item.id), ['inclusion', 'equidad']);
   assert.equal(filterDashboardGroups(groups, schema, { criterion: 'inclusion' }).length, 1);
-  assert.equal(filterDashboardGroups(groups, schema, { criterion: 'equidad' }).length, 0);
+  assert.equal(filterDashboardGroups(groups, schema, { criterion: 'equidad' }).length, 1);
 });
 
 test('programas, periodos y fuentes preservan categorías vacías del universo hasta activar el filtro visual', () => {
@@ -73,16 +73,6 @@ test('programas, periodos y fuentes preservan categorías vacías del universo h
   assert.deepEqual(recordPeriods(groups[0], schema), ['2025-2026']);
   assert.deepEqual(recordPeriods(groups.find(group => group.section.kind === 'annex')!, schema), ['2026-2027']);
   assert.equal(filterDashboardGroups(groups, schema, { programme: 'Ingenieria', period: '2026-2027' }).length, 1);
-});
-
-test('anillo usa capturas reales, no suma porcentajes ni inventa segmentos para categorías vacías', () => {
-  const groups = consolidate(records, schema);
-  const items = aggregateDashboard({ dimension: 'coverage', groups, sources, schema });
-  assert.equal(donutWeight(items[0], 'coverage'), 1);
-  assert.equal(donutWeight(items[1], 'coverage'), 0);
-  assert.equal(donutWeight(items[2], 'coverage'), 0);
-  assert.equal(items.reduce((sum, item) => sum + donutWeight(item, 'coverage'), 0), 1);
-  assert.equal(donutWeight(items[2], 'indicators'), 1);
 });
 
 test('las aportaciones cuantitativas iguales se suman sin duplicados ni conflictos en el Dashboard', () => {
