@@ -22,7 +22,7 @@ export function DynamicCards({ items, label, emptyMessage = 'No hay contenido qu
 }) {
   const [localActive, setLocalActive] = useState<string>();
   const [leaving, setLeaving] = useState<string>();
-  const exitTimer = useRef<ReturnType<typeof setTimeout>>();
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => { if (exitTimer.current) clearTimeout(exitTimer.current); }, []);
   const prefix = useId();
   const cards = useRef(new Map<string, HTMLElement>());
