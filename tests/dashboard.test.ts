@@ -116,3 +116,17 @@ test('un recuento de ingreso por cohorte no se interpreta como un periodo', () =
   const group = { ...groups[0], section: { ...groups[0].section, fields: [{ id: 'count', label: 'Ingreso cohorte', type: 'number' as const }] } };
   assert.deepEqual(recordPeriods(group, schema), ['2025-2026']);
 });
+
+
+test('dos archivos aportantes cuentan como dos incluso cuando se consolidan en un solo grupo', () => {
+  const groups = consolidate([
+    record('from-a', 'i1', { count: 7, equity: 3 }, 'a'),
+    record('from-b', 'i1', { count: 9, equity: 4 }, 'b'),
+  ], schema);
+  assert.equal(groups.length, 1, 'El indicador cuantitativo agrupa una misma fila lógica');
+  assert.equal(groups[0].records.length, 2);
+  const byIndicator = aggregateDashboard({ dimension: 'indicators', groups, sources, schema });
+  assert.equal(byIndicator.find(item => item.id === '1')?.value, 2, 'La barra indica aportaciones reales');
+  const bySources = aggregateDashboard({ dimension: 'sources', groups, sources, schema });
+  assert.equal(bySources.find(item => item.id === 'a')?.value, 2, 'Cuando un grupo incluye dos fuentes, el total no pierde sus aportaciones');
+});
