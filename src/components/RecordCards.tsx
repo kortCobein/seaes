@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChartNoAxesCombined, FileSpreadsheet, Layers3, Pencil, ScanEye, Trash2 } from 'lucide-react';
+import { FileSpreadsheet, Layers3, Pencil, ScanEye, Trash2 } from 'lucide-react';
 import type { DataSource, RecordGroup, SeaesRecord, SectionSchema, WorkbookSchema } from '../models/types';
 import { hasValue, recordLabel } from '../services/consolidation';
 import { DynamicCards, type DynamicCardItem } from './DynamicCards';
@@ -26,7 +26,9 @@ function ContributionContent({ category, sources, onDetail, onEdit, onDelete }: 
   const [selectedSource, setSelectedSource] = useState('');
   const contributedIds = new Set(category.groups.flatMap(group => group.records.map(record => record.sourceId)));
   const contributors = sources.filter(source => contributedIds.has(source.id));
-  const sourceId = contributedIds.has(selectedSource) ? selectedSource : '';
+  const hasSeveralSources = contributors.length > 1;
+  const hasMergedContribution = category.groups.some(group => group.records.length > 1);
+  const sourceId = contributedIds.has(selectedSource) ? selectedSource : hasSeveralSources ? '' : (contributors[0]?.id ?? '');
   const entries = category.groups.flatMap(group => sourceId
     ? group.records.filter(record => record.sourceId === sourceId).map(record => ({ group, record, original: true }))
     : [{ group, record: group.resolved, original: false }]);
@@ -34,7 +36,7 @@ function ContributionContent({ category, sources, onDetail, onEdit, onDelete }: 
   return <div className="dynamic-card-layout">
     <nav className="dynamic-card-menu" aria-label={`Aportaciones de ${category.title}`}>
       <span className="dynamic-menu-heading">Aportaciones</span>
-      <button type="button" className={`dynamic-menu-button ${!sourceId ? 'active' : ''}`} aria-pressed={!sourceId} onClick={() => setSelectedSource('')}><Layers3 size={16}/><span>Consolidado</span><small>{category.groups.length}</small></button>
+      {hasSeveralSources && <button type="button" className={`dynamic-menu-button ${!sourceId ? 'active' : ''}`} aria-pressed={!sourceId} onClick={() => setSelectedSource('')}><Layers3 size={16}/><span>{hasMergedContribution ? 'Consolidado' : 'Todas'}</span><small>{category.groups.length}</small></button>}
       {contributors.map(source => <button type="button" key={source.id} className={`dynamic-menu-button ${sourceId === source.id ? 'active' : ''}`} aria-pressed={sourceId === source.id} title={source.name} onClick={() => setSelectedSource(source.id)}><FileSpreadsheet size={16}/><span>{source.name}</span><small>{category.groups.reduce((total, group) => total + group.records.filter(record => record.sourceId === source.id).length, 0)}</small></button>)}
     </nav>
     <div className="dynamic-card-scroll" aria-live="polite">
@@ -53,7 +55,7 @@ function ContributionContent({ category, sources, onDetail, onEdit, onDelete }: 
           <RecordFields record={record} section={group.section}/>
         </section>;
       })}
-      {!entries.length && <p className="dynamic-record-empty">Sin registros en esta selección.</p>}
+      {!entries.length && <p className="dynamic-record-empty">Sin aportaciones en esta selección.</p>}
     </div>
   </div>;
 }
@@ -82,9 +84,8 @@ export function RecordCards({ schema, groups, sources, kind, onDetail, onEdit, o
     title: category.title,
     eyebrow: `${kind === 'annexes' ? 'Anexo' : 'Indicador'} ${index + 1} de ${categories.length}`,
     description: category.description,
-    badge: `${category.groups.length} registros`,
-    icon: kind === 'annexes' ? <Layers3 size={23}/> : <ChartNoAxesCombined size={23}/>,
+    icon: <span className="dynamic-card-record-count" aria-label={`${category.groups.length} aportaciones`}>{category.groups.length}</span>,
     content: <ContributionContent key={category.id} category={category} sources={sources} onDetail={onDetail} onEdit={onEdit} onDelete={onDelete}/>,
   }));
-  return <DynamicCards items={items} label={kind === 'annexes' ? 'Anexos por hoja' : 'Indicadores y aportaciones'} emptyMessage="No hay registros que coincidan con esta selección."/>;
+  return <DynamicCards items={items} label={kind === 'annexes' ? 'Anexos por hoja' : 'Indicadores y aportaciones'} emptyMessage="Sin aportaciones para los filtros seleccionados."/>;
 }
