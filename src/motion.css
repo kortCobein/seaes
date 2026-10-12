@@ -147,3 +147,73 @@
  @keyframes small-card-expand{from{height:60px}to{height:var(--dynamic-card-height)}}
  @keyframes small-card-collapse{from{height:var(--dynamic-card-height)}to{height:60px}}
 }
+
+
+/* Review 2026-10: only the institutional logo and sliding navigation in header. */
+.app-header.unified-navbar.compact-navbar{
+  display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;
+  gap:clamp(16px,2.5vw,38px);min-height:90px;
+  padding:10px 23px;overflow:visible;border-radius:999px;
+}
+.app-header.unified-navbar.compact-navbar .ut-brand-well{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  width:clamp(225px,24vw,340px);min-height:65px;
+  padding:7px 18px;border:1px solid rgba(255,255,255,.65);
+  border-radius:999px;background:#e4eaf5;
+  box-shadow:inset 4px 5px 11px -3px rgba(35,45,60,.19),inset -2px -3px 6px rgba(255,255,255,.94);
+}
+.app-header.unified-navbar.compact-navbar .ut-brand-well .ut-navbar-logo{
+  width:100%;height:auto;max-height:58px;max-width:none;object-fit:contain;
+}
+.app-header.unified-navbar.compact-navbar nav.sliding-nav{
+  order:0;flex:0 1 auto;margin-left:auto;margin-right:auto;
+  min-width:0;max-width:100%;overflow-x:auto;scrollbar-width:none;
+}
+.app-header.unified-navbar.compact-navbar nav.sliding-nav::-webkit-scrollbar{display:none}
+.app-header.unified-navbar.compact-navbar nav.sliding-nav .nav-item{font-size:13px}
+.app-shell{min-height:100dvh;display:flex;flex-direction:column}
+.workspace{width:100%;flex:1 0 auto;padding-top:24px;padding-bottom:10px}
+.animated-route-stage{min-height:0}
+.analysis-dashboard:only-child{margin-bottom:0}
+/* Equal-width card fields use the available interior area instead of an unnecessarily long list. */
+.dynamic-record-fields{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));
+  column-gap:15px;row-gap:8px;align-items:stretch;
+}
+.dynamic-record-fields>.record-field-tile{
+  display:flex;flex-direction:column;min-width:0;padding:9px 11px;
+  margin:0;border:1px solid rgba(0,36,90,.07);border-radius:12px;
+  background:rgba(255,255,255,.40);
+}
+.dynamic-record-fields>.record-field-tile dt{
+  margin:0 0 5px;font-size:11px;line-height:1.4;overflow-wrap:anywhere;
+}
+.dynamic-record-fields>.record-field-tile dd{
+  margin:0;font-size:14px;font-weight:600;line-height:1.45;
+  overflow-wrap:anywhere;white-space:pre-wrap;
+}
+.record-field-bar{
+  display:block;flex:0 0 auto;position:relative;width:100%;height:7px;
+  margin-top:auto;padding-top:9px;box-sizing:content-box;border-radius:99px;
+  background:linear-gradient(to bottom,transparent 9px,#dbe4ef 9px);
+}
+.record-field-bar>span{
+  display:block;position:relative;top:0;height:7px;max-width:100%;
+  border-radius:99px;transform-origin:left;animation:bar-rise 570ms var(--motion-ease) both;
+}
+/* The explanatory empty-state copy and footer are intentionally absent, not merely hidden. */
+@media(max-width:1080px){
+ .app-header.unified-navbar.compact-navbar{gap:12px;padding:10px 14px;flex-wrap:wrap;border-radius:28px}
+ .app-header.unified-navbar.compact-navbar .ut-brand-well{width:clamp(205px,35vw,320px)}
+ .app-header.unified-navbar.compact-navbar nav.sliding-nav{flex:1 1 auto;justify-content:flex-start;overflow-x:auto}
+}
+@media(max-width:710px){
+ .app-header.unified-navbar.compact-navbar{gap:8px;padding:9px 12px;border-radius:23px}
+ .app-header.unified-navbar.compact-navbar .ut-brand-well{min-height:51px;width:230px;padding:6px 12px}
+ .app-header.unified-navbar.compact-navbar nav.sliding-nav{flex:1 1 100%;width:100%!important;order:2;margin:0;justify-content:flex-start}
+ .app-header.unified-navbar.compact-navbar nav.sliding-nav .nav-item{font-size:12px;padding:7px 11px}
+ .workspace{padding-top:14px}
+ .dynamic-record-fields{grid-template-columns:repeat(auto-fit,minmax(min(100%,165px),1fr));gap:7px}
+ .dynamic-record-fields>.record-field-tile{padding:8px}
+}
+@media(prefers-reduced-motion:reduce){.record-field-bar>span{animation:none}}
