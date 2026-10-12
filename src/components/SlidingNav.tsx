@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import './motion.css';
 
 interface NavItem { id: string; label: string }
 interface Capsule { x: number; y: number; width: number; height: number }
