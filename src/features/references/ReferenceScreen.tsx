@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { BookOpen } from 'lucide-react';
 import type { WorkbookSchema } from '../../models/types';
 import { normalize } from '../../services/consolidation';
 import { DynamicCards } from '../../components/DynamicCards';
