@@ -28,6 +28,13 @@ jobs:
           name: seaes-fuente-integracion
           path: source-repo.zip
           retention-days: 7
+      - name: Empaquetar ancestro común para fusión de tres vías
+        run: git archive --format=zip -o base-repo.zip fba621152cc361ed808e6387192156051f1b939d
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seaes-ancestro-comun
+          path: base-repo.zip
+          retention-days: 7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
