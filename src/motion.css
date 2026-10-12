@@ -1,0 +1,115 @@
+/* Motion layer for the temporary Codex UI. No data or Excel behavior changes. */
+:root{
+ --motion-fast:170ms;--motion-normal:360ms;--motion-slow:540ms;
+ --motion-ease:cubic-bezier(.22,1,.36,1);
+ --motion-soft:cubic-bezier(.33,1,.68,1);
+}
+.app-header.unified-navbar nav.sliding-nav{
+ position:relative;isolation:isolate;align-items:center;gap:4px;
+}
+.app-header.unified-navbar .sliding-nav .nav-motion-capsule{
+ display:block;pointer-events:none;position:absolute;left:0;top:0;z-index:0;
+ border-radius:999px;opacity:0;will-change:transform,width;
+ background:linear-gradient(180deg,#A3ECD9 0%,#54D1B5 46%,#17B498 46.01%,var(--ut-green) 100%);
+ box-shadow:0 12px 20px -11px rgba(0,119,98,.77),0 2px 5px -2px rgba(0,36,90,.18),
+ inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 1px rgba(0,65,55,.24);
+ transition:transform var(--motion-slow) var(--motion-ease),
+ width var(--motion-slow) var(--motion-ease),height var(--motion-normal) var(--motion-ease),opacity .18s ease;
+}
+.app-header.unified-navbar .sliding-nav .nav-motion-capsule.is-ready{opacity:1}
+.app-header.unified-navbar .sliding-nav .nav-item{
+ position:relative;z-index:1;box-shadow:none;transition:color .28s ease,transform .24s var(--motion-ease),
+ background .18s ease,box-shadow .18s ease;
+}
+.app-header.unified-navbar .sliding-nav .nav-item.active,
+.app-header.unified-navbar .sliding-nav .nav-item.active:hover{
+ background:transparent;box-shadow:none;transform:none;color:var(--ut-blue);font-weight:700;
+}
+.app-header.unified-navbar .sliding-nav .nav-item:not(.active):hover{
+ background:rgba(220,228,243,.66);box-shadow:var(--celadon-well);transform:translateY(1px)
+}
+/* Outgoing content is kept for a short exit animation, then incoming content arrives. */
+.animated-route-stage{position:relative;min-width:0;min-height:240px;isolation:isolate}
+.animated-route{min-width:0;animation:route-enter var(--motion-normal) var(--motion-ease) both;transform-origin:50% 0}
+.animated-route.is-exiting{pointer-events:none;animation:route-exit 155ms ease-in both}
+@keyframes route-enter{from{opacity:0;transform:translate3d(0,13px,0) scale(.993);filter:blur(2px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes route-exit{from{opacity:1;transform:none}to{opacity:0;transform:translate3d(0,-8px,0) scale(.997)}}
+@keyframes panel-enter{from{opacity:0;transform:translateY(10px) scale(.992)}to{opacity:1;transform:none}}
+@keyframes panel-leave{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-7px) scale(.99)}}
+@keyframes list-enter{from{opacity:0;transform:translateX(-7px)}to{opacity:1;transform:translateX(0)}}
+@keyframes smooth-pop{from{opacity:0;transform:translateY(9px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes bar-rise{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+/* Celadon accordion: animate the widths rather than snapping between flex sizes. */
+.dynamic-card{
+ transition:flex-grow 520ms var(--motion-ease),flex-basis 520ms var(--motion-ease),
+ width 520ms var(--motion-ease),height 410ms var(--motion-ease),
+ border-color 280ms,background 360ms ease,box-shadow 300ms ease!important;
+}
+.dynamic-card.is-active{transition:flex-grow 520ms var(--motion-ease),flex-basis 520ms var(--motion-ease),
+ width 520ms var(--motion-ease),height 410ms var(--motion-ease),
+ border-color 280ms,background 360ms ease,box-shadow 300ms ease!important}
+.dynamic-card.is-active .dynamic-card-body{animation:panel-enter 340ms var(--motion-ease) both;animation-delay:95ms}
+.dynamic-card.is-exiting .dynamic-card-body{animation:panel-leave 155ms ease-in both;pointer-events:none}
+.dynamic-card.is-exiting .dynamic-card-trigger{cursor:default}
+.dynamic-card-deck{scroll-behavior:smooth}
+.dynamic-card-menu .dynamic-menu-button,.source-card-actions .button,.dynamic-record-actions .icon-button{
+ transition:background 200ms ease,box-shadow 200ms ease,color 180ms,transform 200ms var(--motion-ease);
+}
+.dynamic-menu-button:hover,.dynamic-record-actions .icon-button:hover:not(:disabled){transform:translateY(-1px)}
+.dynamic-card-scroll>.dynamic-record{animation:list-enter .35s var(--motion-ease) both}
+.dynamic-card-scroll>.dynamic-record:nth-child(2){animation-delay:35ms}
+.dynamic-card-scroll>.dynamic-record:nth-child(3){animation-delay:65ms}
+.dynamic-card-scroll>.dynamic-record:nth-child(n+4){animation-delay:85ms}
+.analysis-bar-track>span{transform-origin:left center;animation:bar-rise 720ms var(--motion-ease) both}
+.analysis-kpis>button{transition:background 220ms,box-shadow 250ms,transform 260ms var(--motion-ease)}
+.analysis-kpis>button:hover{transform:translateY(-2px)}
+.app-header.unified-navbar .nav-tool{transition:transform 210ms var(--motion-ease),color 200ms,box-shadow 240ms,background 240ms}
+.app-header.unified-navbar .nav-tool:hover:not(:disabled){transform:translateY(-2px)}
+.app-header.unified-navbar .nav-tool:active:not(:disabled){transform:translateY(1px) scale(.97)}
+.panel,.reference-tile,.badge,.menu-content,.table-options-content{transition:box-shadow 240ms ease,border-color 240ms ease,background-color 240ms ease}
+.reference-tile:hover{transform:translateY(-2px)}
+.message{animation:smooth-pop .28s var(--motion-ease) both}
+.dialog[open]{animation:smooth-pop 330ms var(--motion-ease) both}
+.dialog[open]::backdrop{animation:backdrop-in .3s ease both}
+@keyframes backdrop-in{from{background-color:rgba(0,25,60,0);backdrop-filter:blur(0)}to{background-color:rgba(0,25,60,.52);backdrop-filter:blur(6px)}}
+.dialog.is-closing{animation:panel-leave 155ms ease-in forwards;pointer-events:none}
+.dialog.is-closing::backdrop{animation:backdrop-out 155ms ease-in forwards}
+@keyframes backdrop-out{to{background-color:rgba(0,25,60,0);backdrop-filter:blur(0)}}
+@media(max-width:980px){
+ .dynamic-card:not(.is-active){transition:height .35s var(--motion-ease),background .2s,box-shadow .2s!important}
+ .dynamic-card.is-active{transition:height .41s var(--motion-ease),background .2s,box-shadow .2s!important}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+ .animated-route,.animated-route.is-exiting,.dynamic-card.is-active .dynamic-card-body,.dynamic-card.is-exiting .dynamic-card-body{animation:none!important;opacity:1;transform:none;filter:none}
+ .app-header.unified-navbar .sliding-nav .nav-motion-capsule{transition:none!important;will-change:auto}
+}
+
+
+/* Keep the outgoing card heading in its open layout while the deck resizes. */
+.dynamic-card.is-exiting .dynamic-card-trigger{
+ height:auto!important;flex-direction:row!important;justify-content:flex-start!important;
+ padding:18px 18px 8px!important;gap:12px!important;
+}
+.dynamic-card.is-exiting .dynamic-card-heading{
+ writing-mode:horizontal-tb!important;transform:none!important;width:auto!important;
+ max-height:none!important;min-width:0!important;
+}
+.dynamic-card.is-exiting .dynamic-card-title{white-space:normal!important;font-size:19px!important}
+.dynamic-card.is-exiting .dynamic-card-icon{display:grid!important}
+.dynamic-card.is-exiting .dynamic-card-eyebrow{display:block!important}
+.dynamic-card.is-exiting .dynamic-card-badge{display:inline-flex!important}
+.dynamic-card.is-exiting .dynamic-card-pip{display:none!important}
+.dynamic-card-deck{scroll-padding-inline:12px;padding:13px 13px 28px}
+@media(max-width:980px){
+ @keyframes mobile-card-expand{from{height:60px}to{height:540px}}
+ @keyframes mobile-card-collapse{from{height:540px}to{height:60px}}
+ .dynamic-card.is-active{animation:mobile-card-expand 440ms var(--motion-ease) both}
+ .dynamic-card.is-exiting{animation:mobile-card-collapse 180ms ease-in both}
+}
+@media(max-width:600px){
+ @keyframes small-card-expand{from{height:60px}to{height:620px}}
+ @keyframes small-card-collapse{from{height:620px}to{height:60px}}
+ .dynamic-card.is-active{animation:small-card-expand 440ms var(--motion-ease) both}
+ .dynamic-card.is-exiting{animation:small-card-collapse 180ms ease-in both}
+}
