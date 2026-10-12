@@ -88,7 +88,7 @@ export async function readWorkbookPreview(bytes: Uint8Array | ArrayBuffer, schem
     const visibleRefs = new Set(cells.map(cell => cell.ref));
     for (const [key, binding] of bindings) if (key.startsWith(`${nameKey(sheet.name)}!`)) {
       const ref = key.slice(key.lastIndexOf('!') + 1);
-      if (!visibleRefs.has(ref) && binding.field.type !== 'choice') cells.push({ ref, value: null, binding });
+      if (!visibleRefs.has(ref)) cells.push({ ref, value: null, binding });
     }
     cells.sort((a, b) => parseRef(a.ref).row - parseRef(b.ref).row || parseRef(a.ref).col - parseRef(b.ref).col);
     const images: PreviewImage[] = [];

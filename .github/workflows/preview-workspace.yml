@@ -1,0 +1,34 @@
+name: Validar visor Excel completo
+on:
+  push:
+    branches: [feature/preview-excel-workspace]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Compilar TypeScript y Vite
+        run: npm run build
+      - name: Suite completa de importación, preview, PDF y consolidación
+        run: npm test
+      - name: Verificar recursos del visor
+        run: |
+          test -s dist/index.html
+          test -d dist/assets
+          test -d dist/data
+          grep -R -l "Ampliar" dist/assets/*.js >/dev/null
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seaes-preview-completo-dist
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error

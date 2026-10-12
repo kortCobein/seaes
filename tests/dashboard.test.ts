@@ -100,27 +100,25 @@ test('las aportaciones cuantitativas iguales se suman sin duplicados ni conflict
   assert.equal(filterDashboardGroups(groups, schema, { status: 'conflicts' }).length, 0);
 });
 
-test('duplicados y conflictos de anexos respetan las decisiones de consolidación y el drilldown exacto', () => {
+test('anexos de diferentes personas nunca se convierten en duplicados o conflictos por compartir programa', () => {
   const values = { programme: 'Ingeniería', period: '2026-2027', description: 'Descripción inicial' };
   const copies = [record('copy-a', 'annex', values), record('copy-b', 'annex', values, 'b')];
-  const duplicateGroups = consolidate(copies, schema);
-  assert.equal(dashboardMetrics(duplicateGroups, sources, schema).duplicates, 1);
-  assert.equal(aggregateDashboard({ dimension: 'duplicates', groups: duplicateGroups, sources, schema })[0].value, 1);
-  const conflicting = [...copies, record('different', 'annex', { ...values, description: 'Descripción distinta' }, 'b')];
-  const conflictGroups = consolidate(conflicting, schema);
-  const groupId = conflictGroups[0].id;
-  assert.deepEqual(conflictGroups[0].conflicts.map(conflict => conflict.fieldId), ['description']);
-  assert.equal(dashboardMetrics(conflictGroups, sources, schema).conflicts, 1);
-  assert.equal(filterDashboardGroups(conflictGroups, schema, { status: 'conflicts' }).length, 1);
-  const resolved = consolidate(conflicting, schema, { [groupId]: { fields: { description: { mode: 'record', recordId: 'copy-a' } } } });
-  assert.equal(resolved[0].resolved.values.description, 'Descripción inicial');
-  assert.equal(dashboardMetrics(resolved, sources, schema).conflicts, 0);
-  assert.equal(aggregateDashboard({ dimension: 'conflicts', groups: resolved, sources, schema })[0].value, 0);
-  const allGroups = consolidate([...conflicting, record('other', 'annex', { ...values, programme: 'Licenciatura' })], schema);
-  const item = aggregateDashboard({ dimension: 'conflicts', groups: allGroups, sources, schema })[0];
-  assert.deepEqual(item.groups.map(group => group.id), [groupId]);
-  assert.equal(filterDashboardGroups(allGroups, schema, { groupIds: [] }).length, 0);
-  assert.deepEqual(filterDashboardGroups(allGroups, schema, { groupIds: item.groups.map(group => group.id) }).map(group => group.id), [groupId]);
+  const groups = consolidate(copies, schema);
+  assert.equal(groups.length, 2);
+  assert.equal(dashboardMetrics(groups, sources, schema).duplicates, 0);
+  assert.equal(dashboardMetrics(groups, sources, schema).conflicts, 0);
+  assert.ok(groups.every(group => group.status === 'unique'));
+  const different = record('different', 'annex', { ...values, description: 'Descripción distinta' }, 'b');
+  const all = consolidate([...copies, different], schema);
+  assert.equal(all.length, 3);
+  assert.deepEqual(all.map(group => group.resolved.values.description), [
+    'Descripción inicial', 'Descripción inicial', 'Descripción distinta',
+  ]);
+  assert.equal(dashboardMetrics(all, sources, schema).conflicts, 0);
+  assert.equal(filterDashboardGroups(all, schema, { status: 'conflicts' }).length, 0);
+  const selected = [all[0].id, all[2].id];
+  assert.equal(filterDashboardGroups(all, schema, { groupIds: [] }).length, 0);
+  assert.deepEqual(filterDashboardGroups(all, schema, { groupIds: selected }).map(group => group.id), selected);
 });
 
 test('un recuento de ingreso por cohorte no se interpreta como un periodo', () => {

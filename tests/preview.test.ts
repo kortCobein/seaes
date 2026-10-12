@@ -46,7 +46,7 @@ test('preview lee todas las hojas, valores y fórmulas del Excel real, conserva 
   }
 });
 
-test('preview asocia anexos a su espacio de salida y omite selecciones vacías', async () => {
+test('preview asocia anexos a sus celdas de salida y deja editar selecciones X vacías', async () => {
   const section = schema.sections.find(item => item.kind === 'annex' && item.fields.some(field => field.type === 'choice'))!;
   const field = section.fields.find(item => item.type === 'text')!;
   const record: SeaesRecord = { id: 'annex-last-slot', sourceId: 'test', sectionId: section.id, rowId: section.rows.at(-1)!.id, values: { [field.id]: 'Programa de verificación' }, originalValues: {}, origins: {} };
@@ -54,7 +54,8 @@ test('preview asocia anexos a su espacio de salida y omite selecciones vacías',
   const result = await createWorkbookPreview(template, schema, [group]);
   const sheet = result.preview.sheets.find(item => item.name === section.sheet)!;
   assert.equal(sheet.cells.find(cell => cell.ref === section.rows[0].fields[field.id].outputRef)?.binding?.groupId, group.id);
-  assert.ok(!sheet.cells.some(cell => cell.binding?.field.type === 'choice' && cell.value === null));
+  assert.ok(sheet.cells.some(cell => cell.binding?.field.type === 'choice' && cell.value === null),
+    'Las selecciones X vacías necesitan estar disponibles en el editor del visor.');
 });
 
 test('limpiar una celda explícita elimina su contenido del Excel y de la vista previa', async () => {
@@ -73,15 +74,26 @@ test('limpiar una celda explícita elimina su contenido del Excel y de la vista 
 
 test('PDF conserva cero, falso y fórmulas, excluye vacíos y pagina textos largos completos', async () => {
   const longText = 'Texto largo de verificación con acentos: evaluación, Querétaro y género. '.repeat(170) + 'FIN_DE_CONTENIDO';
+  const captured = (ref: string) => ({
+    groupId: 'test', fieldId: ref,
+    field: { id: ref, label: ref, type: 'text' as const },
+    sectionLabel: 'Anexo de verificación', rowLabel: 'Fila de prueba',
+  });
+  // El PDF del producto exporta aportaciones capturadas, NO instrucciones de plantilla.
   const preview: WorkbookPreviewData = { warnings: [], sheets: [{ name: 'Anexo de verificación', merges: [], charts: 0, images: [], cells: [
-    { ref: 'A1', value: 'Encabezado' }, { ref: 'A2', value: 0 }, { ref: 'B2', value: false }, { ref: 'C2', value: null },
-    { ref: 'D2', value: '' }, { ref: 'E2', value: null, formula: '=SUM(A2)' }, { ref: 'A3', value: longText },
+    { ref: 'A1', value: 'Encabezado', captured: captured('A1') },
+    { ref: 'A2', value: 0, captured: captured('A2') },
+    { ref: 'B2', value: false, captured: captured('B2') },
+    { ref: 'C2', value: null },
+    { ref: 'D2', value: '' },
+    { ref: 'E2', value: null, formula: '=SUM(A2)' },
+    { ref: 'A3', value: longText, captured: captured('A3') },
   ] }] };
   assert.equal(pdfCellValue(preview.sheets[0].cells[1]), '0');
   assert.equal(pdfCellValue(preview.sheets[0].cells[2]), 'Falso');
   assert.match(pdfCellValue(preview.sheets[0].cells[5]), /Sin resultado recalculado/);
   const result = createWorkbookPdf(preview, await fonts);
-  assert.equal(result.cells, 5);
+  assert.equal(result.cells, 4);
   assert.ok(result.pages >= 3, 'El texto largo necesita varias páginas');
   assert.equal(new TextDecoder().decode(result.bytes.subarray(0, 5)), '%PDF-');
   if (process.env.PREVIEW_QA_OUTPUT) {

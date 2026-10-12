@@ -190,7 +190,8 @@ test('edición, captura manual y duplicados exportan; exceder capacidad produce 
   const manual: SeaesRecord = { ...original, id: 'manual', sourceId: 'Captura manual', rowId: section.rows[1].id, values: { [field.id]: 'Registro manual con acentos: evaluación' }, originalValues: {}, origins: {} };
   const duplicate = { ...edited, id: 'duplicado', sourceId: 'segunda-fuente' };
   const consolidated = consolidate([edited, manual, duplicate], schema);
-  assert.ok(consolidated.some(g => g.status === 'exact'));
+  assert.equal(consolidated.length, 3);
+  assert.ok(consolidated.every(g => g.status === 'unique' && g.records.length === 1), 'El mismo texto de distintos orígenes nunca implica duplicado');
   const result = await exportWorkbook(output, schema, consolidated.map(g => g.resolved));
   const reimported = await parseWorkbook(result.bytes, schema, source('edicion-exportada'), 'output');
   assert.deepEqual(canonical(reimported.records), canonical(consolidated.map(g => g.resolved)));
