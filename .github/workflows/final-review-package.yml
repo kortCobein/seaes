@@ -1,0 +1,33 @@
+name: Preparar integración SEAES y fuente revisable
+on:
+  push:
+    branches:
+      - fix/integracion-final-ut-svg-20261012
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Empaquetar código fuente completo
+        run: git archive --format=zip -o source-repo.zip HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seaes-fuente-integracion
+          path: source-repo.zip
+          retention-days: 7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seaes-integracion-dist
+          path: dist/
+          retention-days: 14
