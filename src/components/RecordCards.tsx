@@ -7,8 +7,12 @@ import { statusText } from './RecordsTable';
 import { MarkedCriteria } from './MarkedCriteria';
 
 export function RecordFields({ record, section }: { record: SeaesRecord; section: SectionSchema }) {
-  const fields = section.fields.filter(field => field.type !== 'choice' && hasValue(record.values[field.id]));
-  return <>{fields.length > 0 && <dl className="dynamic-record-fields">{fields.map(field => <div key={field.id}><dt>{field.label}</dt><dd>{String(record.values[field.id])}</dd></div>)}</dl>}<MarkedCriteria fields={section.fields} values={record.values}/></>;
+  const active = section.fields.some(field => hasValue(record.values[field.id]));
+  const row = section.rows.find(item => item.id === record.rowId);
+  const fields = section.fields.filter(field => field.type !== 'choice' &&
+    (hasValue(record.values[field.id]) || (active && section.kind === 'quantitative' &&
+      field.type === 'number' && (!row || !!row.fields[field.id]))));
+  return <>{fields.length > 0 && <dl className="dynamic-record-fields">{fields.map(field => <div key={field.id}><dt>{field.label}</dt><dd>{String(!hasValue(record.values[field.id]) && field.type === 'number' ? 0 : record.values[field.id])}</dd></div>)}</dl>}<MarkedCriteria fields={section.fields} values={record.values}/></>;
 }
 
 interface RecordCardCategory { id: string; title: string; description: string; groups: RecordGroup[] }
