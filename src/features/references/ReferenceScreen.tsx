@@ -11,14 +11,15 @@ const kindOf = (name: string): Exclude<ReferenceKind, 'all'> | 'rasgos' =>
 
 const kindLabels = { indicaciones: 'Indicaciones', cambios: 'Cambios', ejemplos: 'Ejemplos de la plantilla', rasgos: 'Rasgos del perfil de egreso' };
 
-export function ReferenceScreen({ schema, kind, query, indicator, isRasgos = false }: {
+export function ReferenceScreen({ schema, kind, query, indicator, hideNulls = true, isRasgos = false }: {
   schema: WorkbookSchema; kind: ReferenceKind; query: string; indicator: string;
-  sourceName?: string; isRasgos?: boolean; relatedRecords: number;
+  sourceName?: string; isRasgos?: boolean; hideNulls?: boolean; relatedRecords: number;
 }) {
   const all = useMemo(() => (schema.referenceSheets ?? []).filter(item =>
     (isRasgos ? kindOf(item.name) === 'rasgos' : kindOf(item.name) !== 'rasgos')
     && (isRasgos || kind === 'all' || kindOf(item.name) === kind)
-    && normalize(`${item.name} ${item.text}`).includes(normalize(query))), [schema.referenceSheets, isRasgos, kind, query]);
+    && (!hideNulls || item.text.trim().length > 0)
+    && normalize(`${item.name} ${item.text}`).includes(normalize(query))), [schema.referenceSheets, isRasgos, kind, query, hideNulls]);
 
   // Reference sheets belong to the official template, not to a particular imported workbook.
   // Only narrow the reference list when its text actually names the selected indicator.
