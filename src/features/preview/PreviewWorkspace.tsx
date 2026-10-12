@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ChevronLeft, ChevronRight, ChevronsDown, ChevronsUp, Expand,
+  ChevronLeft, ChevronRight, ChevronsDown, ChevronsUp,
   FileSpreadsheet, Info, Maximize2, Minimize2, Pencil, Search,
   ZoomIn, ZoomOut,
 } from 'lucide-react';
@@ -32,8 +32,8 @@ function SheetGrid({ sheet, zoom, compact, onEdit }: {
   const layout = useMemo(() => {
     const byRef = new Map(sheet.cells.map(cell => [cell.ref, cell]));
     const coords = sheet.cells.map(cell => coordinates(cell.ref));
-    const rowMax = Math.max(1, ...coords.map(cell => cell.row));
-    const colMax = Math.max(1, ...coords.map(cell => cell.col));
+    const rowMax = coords.reduce((highest, cell) => Math.max(highest, cell.row), 1);
+    const colMax = coords.reduce((highest, cell) => Math.max(highest, cell.col), 1);
     // Only one sheet renders at a time. Split exceptionally long sheets into consecutive
     // row ranges to avoid generating tens of thousands of DOM elements in one render.
     const usedRows = [...new Set(coords.map(cell => cell.row))].sort((a, b) => a - b);
