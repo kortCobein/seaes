@@ -115,7 +115,3 @@ export function aggregateDashboard({ dimension, groups, universe = groups, sourc
 
 export const visibleAnalysisItems = (items: AnalysisItem[], hideNulls: boolean) => hideNulls ? items.filter(item => item.hasData) : items;
 
-/** Donuts are a distribution of real records or filled slots, never a sum of percentages. */
-export function donutWeight(item: AnalysisItem, dimension: DashboardDimension) {
-  return dimension === 'all' || dimension === 'coverage' ? item.coverage.filled : item.groups.length;
-}
