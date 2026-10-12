@@ -13,6 +13,7 @@ interface Props {
   groups: RecordGroup[];
   busy: string;
   globalQuery: string;
+  hideNulls: boolean;
   filteredSourceId: string;
   onRename: (source: DataSource, name: string) => void;
   onDelete: (source: DataSource) => void;
@@ -79,12 +80,12 @@ function SourceContent({ source, records, schema, groups, busy, onRename, onDele
   </div>;
 }
 
-export function FilesScreen({ schema, sources, records, groups, busy, globalQuery, filteredSourceId, onRename, onDelete, onEdit, onDeleteRecords, onAdd }: Props) {
+export function FilesScreen({ schema, sources, records, groups, busy, globalQuery, hideNulls, filteredSourceId, onRename, onDelete, onEdit, onDeleteRecords, onAdd }: Props) {
   const visible = useMemo(() => {
     const query = normalize(globalQuery);
-    return sources.filter(source => (!filteredSourceId || source.id === filteredSourceId) && (!query || normalize(`${source.name} ${source.filename}`).includes(query)
+    return sources.filter(source => (!hideNulls || records.some(record => record.sourceId === source.id)) && (!filteredSourceId || source.id === filteredSourceId) && (!query || normalize(`${source.name} ${source.filename}`).includes(query)
       || records.some(record => record.sourceId === source.id && normalize(Object.values(record.values).join(' ')).includes(query))));
-  }, [sources, records, globalQuery, filteredSourceId]);
+  }, [sources, records, globalQuery, filteredSourceId, hideNulls]);
   const items: DynamicCardItem[] = visible.map(source => ({
     id: source.id,
     title: source.name,
