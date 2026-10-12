@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
-import { ArrowUpRight, BookOpen, FileText } from 'lucide-react';
+import { useMemo } from 'react';
+import { BookOpen } from 'lucide-react';
 import type { WorkbookSchema } from '../../models/types';
 import { normalize } from '../../services/consolidation';
-import { Dialog } from '../../components/Dialog';
+import { DynamicCards } from '../../components/DynamicCards';
 import './references.css';
 
 export type ReferenceKind = 'all' | 'indicaciones' | 'cambios' | 'ejemplos';
@@ -10,11 +10,12 @@ const kindOf = (name: string): Exclude<ReferenceKind, 'all'> | 'rasgos' =>
   /rasgos?/i.test(name) ? 'rasgos' : /cambio|modificacion|actualizac/i.test(name) ? 'cambios'
   : /ejemplo|muestra/i.test(name) ? 'ejemplos' : 'indicaciones';
 
-export function ReferenceScreen({ schema, kind, query, indicator, sourceName, isRasgos = false, relatedRecords }: {
+const kindLabels = { indicaciones: 'Indicaciones', cambios: 'Cambios', ejemplos: 'Ejemplos de la plantilla', rasgos: 'Rasgos del perfil de egreso' };
+
+export function ReferenceScreen({ schema, kind, query, indicator, isRasgos = false }: {
   schema: WorkbookSchema; kind: ReferenceKind; query: string; indicator: string;
   sourceName?: string; isRasgos?: boolean; relatedRecords: number;
 }) {
-  const [selected, setSelected] = useState<{ name: string; text: string }>();
   const all = useMemo(() => (schema.referenceSheets ?? []).filter(item =>
     (isRasgos ? kindOf(item.name) === 'rasgos' : kindOf(item.name) !== 'rasgos')
     && (isRasgos || kind === 'all' || kindOf(item.name) === kind)
@@ -27,22 +28,16 @@ export function ReferenceScreen({ schema, kind, query, indicator, sourceName, is
     return new RegExp(`(?:indicador|ind[.]?)\\s*0*${label}(?![0-9])`, 'i').test(`${item.name} ${item.text}`);
   }) : all;
   const references = !indicator || matches.length ? matches : all;
-  return <section className="reference-screen panel">
-    <div className="reference-screen-heading">
-      <div><h2>{isRasgos ? 'Rasgos' : 'Indicaciones, cambios y ejemplos'}</h2><p>{isRasgos ? 'Rasgos y material de apoyo de la plantilla.' : 'Documentación y ejemplos de referencia de SEAES.'}</p></div>
-      <span className="count">{references.length} hojas</span>
-    </div>
-    {(sourceName || indicator) && <p className="reference-context">
-      {relatedRecords.toLocaleString('es-MX')} registros coinciden con los filtros.
-      {sourceName && ` Fuente: ${sourceName}.`}
-      {' '}Los textos de referencia son comunes a la plantilla, no copias independientes por archivo.
-      {indicator && !matches.length && ' No hay referencias etiquetadas para ese indicador; se muestran las generales.'}
-    </p>}
-    <div className="reference-grid">{references.map(item => <button key={item.name} type="button" className="reference-tile" onClick={() => setSelected(item)}>
-      <span className="reference-symbol"><BookOpen size={20}/></span>
-      <span className="reference-description"><strong>{item.name}</strong><small>{item.text.slice(0,155).replace(/\s+/g,' ')}{item.text.length > 155 ? '…' : ''}</small></span><ArrowUpRight size={16} aria-hidden="true"/>
-    </button>)}</div>
-    {!references.length && <div className="quiet-empty"><FileText size={24}/><p>No hay documentos que coincidan con estos filtros.</p></div>}
-    {selected && <Dialog title={selected.name} onClose={() => setSelected(undefined)} wide><div className="analysis-reference-text">{selected.text}</div></Dialog>}
+  return <section className="reference-screen" aria-label={isRasgos ? 'Rasgos de la plantilla' : 'Material de consulta'}>
+    {indicator && !matches.length && <p className="reference-context">No hay referencias específicas para este indicador; se muestran las generales.</p>}
+    <DynamicCards label={isRasgos ? 'Rasgos' : 'Indicaciones, cambios y ejemplos'} emptyMessage="No hay documentos que coincidan con la búsqueda." items={references.map(item => ({
+      id: item.name,
+      title: item.name.trim(),
+      eyebrow: kindLabels[kindOf(item.name)],
+      icon: <BookOpen size={22}/>,
+      content: <article className="reference-document dynamic-card-scroll" aria-label={`Contenido de ${item.name.trim()}`} tabIndex={0}>
+        {item.text.split(/\r?\n\s*\r?\n/).filter(paragraph => paragraph.trim()).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+      </article>,
+    }))}/>
   </section>;
 }

@@ -1,29 +1,97 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ChartNoAxesCombined, Check, FileText, Layers3, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { ExcelIcon } from '../../components/ExcelIcon';
-import type { DataSource, RecordGroup, WorkbookSchema } from '../../models/types';
-import { coverage } from '../../services/consolidation';
-import { Dialog } from '../../components/Dialog';
+import { DynamicCards, type DynamicCardItem } from '../../components/DynamicCards';
+import { RecordFields } from '../../components/RecordCards';
+import type { DataSource, RecordGroup, SeaesRecord, WorkbookSchema } from '../../models/types';
+import { normalize, recordLabel } from '../../services/consolidation';
 
 const compatibility = { compatible: 'Compatible', variations: 'Con variaciones', partial: 'Parcial', unknown: 'Error de lectura' };
-// Do not repeat a filename when it is only the source name plus the .xlsx extension.
-const isDifferentFilename = (name: string, filename: string) => {
-  const simplify = (text: string) => text.trim().replace(/\.xlsx$/i, '').normalize('NFKC').toLocaleLowerCase('es-MX').replace(/\s+/g, ' ');
-  return !!filename.trim() && simplify(name) !== simplify(filename);
-};
-interface Props { schema: WorkbookSchema; sources: DataSource[]; groups: RecordGroup[]; busy: string; onRecords: (sourceId: string) => void; onDelete: (source: DataSource) => void; globalQuery: string; filteredSourceId: string; onRename: (source: DataSource, name: string) => void }
-export function FilesScreen({ schema, sources, groups, busy, onRecords, onDelete, globalQuery, filteredSourceId, onRename }: Props) {
-  const [selectedId, setSelectedId] = useState<string>(); const [page, setPage] = useState(0); const [alias, setAlias] = useState('');
-  const query = globalQuery;
-  const selected = sources.find(s => s.id === selectedId);
-  const visible = useMemo(() => sources.filter(s => (!filteredSourceId || s.id === filteredSourceId) && `${s.name} ${s.filename}`.toLocaleLowerCase('es-MX').includes(query.toLocaleLowerCase('es-MX'))), [sources, query, filteredSourceId]);
-  const pages = Math.max(1, Math.ceil(visible.length / 20));
-  useEffect(() => setPage(0), [query]); useEffect(() => setPage(p => Math.min(p, pages - 1)), [pages]);
-  const own = selected ? groups.filter(g => g.sourceIds.includes(selected.id)) : [];
-  const sourceGroups = selected ? own.map(g => ({ ...g, resolved: { ...g.resolved, values: Object.assign({}, ...g.records.filter(r => r.sourceId === selected.id).map(r => r.values)) } })) : [];
-  const c = coverage(sourceGroups, schema);
-  const sourceButton = (s: DataSource) => <button className="record-title source-title" onClick={() => { setSelectedId(s.id); setAlias(s.name); }}><ExcelIcon size={29}/><span>{s.name}</span></button>;
-  return <>
-  <section className="panel files-panel"><div className="panel-heading"><div className="button-row"><h2 className="sources-heading"><ExcelIcon size={27}/>Fuentes</h2><span className="count">{sources.length}</span>{!!demo.length && <span className="badge demo">Datos ficticios</span>}</div></div><div className="table-scroll"><table className="files-table"><thead><tr><th>Fuente</th><th>Registros</th><th>Indicadores</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>{visible.slice(page * 20, (page + 1) * 20).map(s => { const contributed = groups.filter(g => g.sourceIds.includes(s.id)); return <tr key={s.id}><td>{sourceButton(s)}{isDifferentFilename(s.name, s.filename) && <small className="cell-subtitle" title={s.filename}>{s.filename}</small>}</td><td>{contributed.length.toLocaleString('es-MX')}</td><td>{new Set(contributed.flatMap(g => g.section.indicators)).size}</td><td><span className={`badge ${s.compatibility === 'unknown' ? 'conflict' : s.warnings.length ? 'possible' : 'unique'}`}>{s.warnings.length ? `${s.warnings.length} advertencia${s.warnings.length === 1 ? '' : 's'}` : compatibility[s.compatibility]}</span>{s.kind === 'demo' && <span className="badge demo">Ficticio</span>}{s.kind === 'manual' && <span className="badge">Manual</span>}</td><td>{new Date(s.importedAt).toLocaleDateString('es-MX')}</td></tr>; })}</tbody></table>{!visible.length && <div className="quiet-empty">{query ? 'No hay archivos que coincidan.' : 'No hay fuentes cargadas.'}</div>}</div><div className="table-footer"><span>{visible.length ? page * 20 + 1 : 0}–{Math.min((page + 1) * 20, visible.length)} de {visible.length} fuentes</span><div className="button-row"><button className="button text small" disabled={!page} onClick={() => setPage(page - 1)}>Anterior</button><span>{page + 1} / {pages}</span><button className="button text small" disabled={page >= pages - 1} onClick={() => setPage(page + 1)}>Siguiente</button></div></div></section>
-  {selected && <Dialog title={selected.name} onClose={() => setSelectedId(undefined)} drawer wide><div className="dialog-body"><div className="detail-metrics"><div><strong>{own.length}</strong><span>registros</span></div><div><strong>{new Set(own.flatMap(g => g.section.indicators)).size}</strong><span>indicadores</span></div><div><strong>{c.percentage}%</strong><span>cobertura aportada</span></div></div><label className="source-rename">Nombre corto de la fuente<input value={alias} maxLength={60} onChange={event => setAlias(event.target.value)} aria-label="Editar nombre corto de fuente"/></label><dl className="verification-list"><div><dt>Archivo original</dt><dd>{selected.filename}</dd></div><div><dt>Fecha de importación</dt><dd>{new Date(selected.importedAt).toLocaleString('es-MX')}</dd></div><div><dt>Compatibilidad</dt><dd>{compatibility[selected.compatibility]}</dd></div><div><dt>Conflictos pendientes</dt><dd>{own.filter(g => g.conflicts.some(v => !v.resolved)).length}</dd></div><div><dt>Duplicados / coincidencias</dt><dd>{own.filter(g => ['exact', 'possible'].includes(g.status)).length}</dd></div><div><dt>Campos cuantitativos capturados</dt><dd>{c.filled} / {c.expected}</dd></div></dl><details className="compact-disclosure"><summary>Indicadores y hojas</summary><p>{[...new Set(own.flatMap(g => g.section.indicators))].sort((a, b) => a - b).map(i => String(i).padStart(2, '0')).join(' · ') || 'Sin información'}</p><ul>{[...new Set(own.map(g => g.section.sheet))].map(sheet => <li key={sheet}>{sheet}</li>)}</ul></details>{!!selected.warnings.length && <details className="compact-disclosure"><summary>{selected.warnings.length} advertencias</summary><ul>{selected.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul></details>}</div><div className="dialog-footer"><button className="button secondary" disabled={!!busy || !alias.trim() || alias.trim() === selected.name} onClick={() => onRename(selected, alias.trim())}>Guardar nombre</button><button className="button danger" disabled={!!busy} onClick={() => onDelete(selected)}><Trash2 size={16}/>Eliminar fuente</button><button className="button primary" onClick={() => { onRecords(selected.id); setSelectedId(undefined); }}>Ver registros</button></div></Dialog>}</>;
+interface Props {
+  schema: WorkbookSchema;
+  sources: DataSource[];
+  records: SeaesRecord[];
+  groups: RecordGroup[];
+  busy: string;
+  globalQuery: string;
+  filteredSourceId: string;
+  onRename: (source: DataSource, name: string) => void;
+  onDelete: (source: DataSource) => void;
+  onEdit: (record: SeaesRecord) => void;
+  onDeleteRecords: (records: SeaesRecord[]) => void;
+  onAdd: (sourceId: string) => void;
 }
+type SourceCategory = 'all' | 'quantitative' | 'annex' | 'identity';
+const categories = [
+  { id: 'all' as const, label: 'Todo', icon: Layers3 },
+  { id: 'quantitative' as const, label: 'Indicadores', icon: ChartNoAxesCombined },
+  { id: 'annex' as const, label: 'Anexos', icon: Layers3 },
+  { id: 'identity' as const, label: 'Identificación', icon: FileText },
+];
+
+function SourceContent({ source, records, schema, groups, busy, onRename, onDelete, onEdit, onDeleteRecords, onAdd }: Pick<Props, 'records' | 'schema' | 'groups' | 'busy' | 'onRename' | 'onDelete' | 'onEdit' | 'onDeleteRecords' | 'onAdd'> & { source: DataSource }) {
+  const [category, setCategory] = useState<SourceCategory>('all');
+  const [editing, setEditing] = useState(false);
+  const [alias, setAlias] = useState(source.name);
+  const sections = new Map(schema.sections.map(section => [section.id, section]));
+  // Mantener cada aportación original evita editar o eliminar datos de otra fuente.
+  const own = records.filter(record => record.sourceId === source.id);
+  const available = categories.filter(item => item.id === 'all' || own.some(record => sections.get(record.sectionId)?.kind === item.id));
+  const selected = available.some(item => item.id === category) ? category : 'all';
+  const visible = own.filter(record => selected === 'all' || sections.get(record.sectionId)?.kind === selected);
+  const groupsByRecord = new Map(groups.flatMap(group => group.records.map(record => [record.id, group] as const)));
+
+  return <div className="source-card-content">
+    <div className="source-card-actions">
+      <button type="button" className="button secondary small" aria-expanded={editing} disabled={!!busy} onClick={() => { setAlias(source.name); setEditing(value => !value); }}><Pencil size={14}/>Editar</button>
+      <button type="button" className="button secondary small" disabled={!!busy} onClick={() => onAdd(source.id)}><Plus size={15}/>Agregar registro</button>
+      <button type="button" className="button danger small" disabled={!!busy} onClick={() => onDelete(source)}><Trash2 size={14}/>Eliminar fuente</button>
+      <span className={`badge ${source.compatibility === 'unknown' ? 'conflict' : source.warnings.length ? 'possible' : 'unique'}`}>{source.warnings.length ? `${source.warnings.length} advertencias` : compatibility[source.compatibility]}</span>
+    </div>
+    {editing && <form className="source-card-rename" onSubmit={event => { event.preventDefault(); if (alias.trim() && alias.trim() !== source.name) onRename(source, alias.trim()); setEditing(false); }}>
+      <label>Nombre de la fuente<input aria-label="Editar nombre de la fuente" value={alias} maxLength={120} onChange={event => setAlias(event.target.value)} disabled={!!busy}/></label>
+      <button type="submit" className="button secondary small" disabled={!!busy || !alias.trim()}><Check size={14}/>Guardar</button>
+      <button type="button" className="icon-button" aria-label="Cancelar edición del nombre" onClick={() => setEditing(false)}><X size={15}/></button>
+    </form>}
+    <div className="source-card-records dynamic-card-layout">
+      <nav className="dynamic-card-menu" aria-label="Contenido de la fuente">
+        <span className="dynamic-menu-heading">Contenido aportado</span>
+        {available.map(item => <button type="button" key={item.id} className={`dynamic-menu-button ${selected === item.id ? 'active' : ''}`} aria-pressed={selected === item.id} onClick={() => setCategory(item.id)}><item.icon size={16}/><span>{item.label}</span><small>{item.id === 'all' ? own.length : own.filter(record => sections.get(record.sectionId)?.kind === item.id).length}</small></button>)}
+      </nav>
+      <div className="dynamic-card-scroll" aria-live="polite">
+        {visible.map(record => {
+          const section = sections.get(record.sectionId);
+          if (!section) return null;
+          const label = recordLabel(record, section);
+          const pending = groupsByRecord.get(record.id)?.conflicts.filter(conflict => !conflict.resolved && conflict.candidates.some(candidate => candidate.recordId === record.id)).length ?? 0;
+          return <section key={record.id} className="dynamic-record">
+            <div className="dynamic-record-header"><div><h3>{label}</h3><p>{section.sheet}{section.label !== label && section.label !== section.sheet ? ` · ${section.label}` : ''}</p></div><div className="dynamic-record-actions">
+              <button type="button" className="icon-button" disabled={!!busy} title="Editar registro" aria-label={`Editar ${label}`} onClick={() => onEdit(record)}><Pencil size={15}/></button>
+              <button type="button" className="icon-button danger" disabled={!!busy} title="Eliminar registro" aria-label={`Eliminar ${label}`} onClick={() => onDeleteRecords([record])}><Trash2 size={15}/></button>
+            </div></div>
+            {pending > 0 && <span className="badge conflict">{pending} conflictos pendientes</span>}
+            <RecordFields record={record} section={section}/>
+          </section>;
+        })}
+        {!visible.length && <div className="quiet-empty">Esta fuente no tiene registros. Agrega uno para comenzar.</div>}
+      </div>
+    </div>
+    {source.warnings.length > 0 && <details className="source-card-warnings"><summary>Advertencias de lectura</summary><ul>{source.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul></details>}
+  </div>;
+}
+
+export function FilesScreen({ schema, sources, records, groups, busy, globalQuery, filteredSourceId, onRename, onDelete, onEdit, onDeleteRecords, onAdd }: Props) {
+  const visible = useMemo(() => {
+    const query = normalize(globalQuery);
+    return sources.filter(source => (!filteredSourceId || source.id === filteredSourceId) && (!query || normalize(`${source.name} ${source.filename}`).includes(query)
+      || records.some(record => record.sourceId === source.id && normalize(Object.values(record.values).join(' ')).includes(query))));
+  }, [sources, records, globalQuery, filteredSourceId]);
+  const items: DynamicCardItem[] = visible.map(source => ({
+    id: source.id,
+    title: source.name,
+    icon: <ExcelIcon size={30}/>,
+    content: <SourceContent key={source.id} source={source} records={records} schema={schema} groups={groups} busy={busy} onRename={onRename} onDelete={onDelete} onEdit={onEdit} onDeleteRecords={onDeleteRecords} onAdd={onAdd}/>,
+  }));
+  return <DynamicCards items={items} label="Fuentes y registros aportados" className="source-cards" emptyMessage={globalQuery || filteredSourceId ? 'No hay fuentes que coincidan con la búsqueda.' : 'Carga un archivo de entrada para revisar sus aportaciones.'}/>;
+}
+

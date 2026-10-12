@@ -1,0 +1,34 @@
+.workbook-preview { min-width:0; }
+.preview-toolbar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:12px; }
+.preview-toolbar h2 { margin:0 0 4px; font-size:20px; color:#00245a; }
+.preview-toolbar p { margin:0; color:#718099; font-size:12px; }
+.preview-export-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.preview-help { margin-bottom:12px; color:#5a6c87; font-size:12px; }
+.preview-help summary { display:flex; align-items:center; gap:6px; cursor:pointer; width:fit-content; }
+.preview-help p { max-width:1000px; line-height:1.6; margin:8px 0; }
+.preview-formula-warning,.preview-chart-note { display:flex; align-items:flex-start; gap:7px; color:#75541b; font-size:11px; line-height:1.5; }
+.preview-formula-warning svg,.preview-chart-note svg { flex-shrink:0; margin-top:1px; }
+.preview-loading { min-height:300px; display:flex; gap:12px; align-items:center; justify-content:center; color:#60718a; }
+.preview-sheet-content { display:flex; flex-direction:column; min-height:0; height:100%; }
+.preview-images { display:flex; gap:12px; align-items:center; flex-shrink:0; overflow:auto; padding:0 0 12px; }
+.preview-images img { max-height:65px; max-width:220px; object-fit:contain; }
+.preview-grid-scroll { min-height:0; overflow:auto; border:1px solid #d3deea; border-radius:11px; background:white; scrollbar-width:thin; scrollbar-color:#8aa7b4 transparent; }
+.preview-grid { border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; font-size:11px; color:#213d65; table-layout:fixed; }
+.preview-grid th,.preview-grid td { border-right:1px solid #dde5ef; border-bottom:1px solid #dde5ef; padding:8px; min-width:98px; max-width:280px; width:140px; white-space:pre-wrap; overflow-wrap:anywhere; vertical-align:top; line-height:1.5; }
+.preview-grid th { position:sticky; background:#ecf2f8; text-align:center; padding:6px; color:#6e829c; font-size:10px; }
+.preview-grid thead th { top:0; z-index:2; }
+.preview-grid th:first-child { left:0; z-index:1; width:36px; min-width:36px; max-width:36px; }
+.preview-grid thead th:first-child { z-index:3; }
+.preview-grid td[colspan] { max-width:560px; }
+.preview-grid .preview-editable { padding:0; box-shadow:inset 0 0 0 1px #009d8130; }
+.preview-editable button { width:100%; min-height:36px; display:flex; gap:8px; align-items:flex-start; text-align:left; padding:8px; color:inherit; font:inherit; font-weight:inherit; border:0; background:#009d8108; cursor:pointer; }
+.preview-editable button:hover { background:#009d811b; }
+.preview-editable button span { flex:1; white-space:pre-wrap; }
+.preview-editable button svg { flex-shrink:0; color:#008b75; margin-top:3px; }
+.preview-editable em { color:#8b98aa; font-size:10px; font-weight:400; }
+.preview-formula code { display:block; font-family:Consolas,monospace; font-size:10px; color:#655388; white-space:pre-wrap; }
+.preview-formula small { display:block; color:#87631c; margin-top:6px; font-size:9px; font-weight:400; }
+.preview-cell-editor label { display:grid; gap:8px; }
+.preview-cell-editor input,.preview-cell-editor textarea,.preview-cell-editor select { width:100%; }
+.preview-cell-editor p { line-height:1.6; }
+@media(max-width:700px) { .preview-toolbar { flex-direction:column; align-items:flex-start; }.preview-grid th,.preview-grid td { width:125px; min-width:85px; }.preview-loading { flex-direction:column; text-align:center; padding:20px; } }

@@ -24,7 +24,7 @@ export interface SeaesRecord {
   origins: Record<string, { sheet: string; cell: string }>;
   modifiedAt?: string;
 }
-export interface FieldDecision { mode: 'record' | 'sum' | 'combine'; recordId?: string }
+export interface FieldDecision { mode: 'record' | 'sum' | 'combine' | 'value'; recordId?: string; value?: Scalar }
 export interface GroupDecision { separate?: boolean; fields?: Record<string, FieldDecision> }
 export interface WorkSession {
   version: 1; sources: DataSource[]; records: SeaesRecord[];

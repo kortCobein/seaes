@@ -128,7 +128,6 @@ export class OutputWorkbookMapper {
         fixedRows.add(key);
       }
       for (const [fieldId, value] of Object.entries(record.values)) {
-        if (value == null || value === '') continue;
         const mapping = row.fields[fieldId];
         if (!mapping?.outputRef) throw new Error(`El campo ${fieldId} de ${section.label} no tiene destino de exportación. No se descartó su contenido.`);
         const ref = mapping.outputRef;

@@ -1,4 +1,5 @@
-import type { DataSource, ExportReport, ParseResult, SeaesRecord, WorkbookSchema } from '../models/types';
+import type { DataSource, ExportReport, ParseResult, RecordGroup, SeaesRecord, WorkbookSchema } from '../models/types';
+import type { WorkbookPreviewResult } from './excel/WorkbookPreview';
 let worker: Worker | undefined;
 let sequence = 0;
 const pending = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void }>();
@@ -12,4 +13,5 @@ function request<T>(message: Record<string, unknown>): Promise<T> {
 }
 export const parseExcel = (bytes: ArrayBuffer, schema: WorkbookSchema, source: DataSource, mode: 'input' | 'output' = 'input') => request<ParseResult>({ type: 'parse', bytes, schema, source, mode });
 export const exportExcel = (bytes: ArrayBuffer, schema: WorkbookSchema, records: SeaesRecord[], mode: 'full' | 'simplified' = 'full') => request<{ bytes: Uint8Array; report: ExportReport }>({ type: 'export', bytes, schema, records, mode });
+export const previewExcel = (bytes: ArrayBuffer, schema: WorkbookSchema, groups: RecordGroup[]) => request<WorkbookPreviewResult>({ type: 'preview', bytes, schema, groups });
 export async function getAsset(name: string): Promise<ArrayBuffer> { const response = await fetch(`${import.meta.env.BASE_URL}data/${name}`); if (!response.ok) throw new Error(`No se encontró el recurso ${name}.`); return response.arrayBuffer(); }

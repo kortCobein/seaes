@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { ArrowUpRight, BarChart3, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
+import { ArrowUpRight, BarChart3, ChartNoAxesCombined, ChevronLeft, ChevronRight, PieChart, Upload } from 'lucide-react';
 import { Dialog } from '../../components/Dialog';
-import { ExcelIcon } from '../../components/ExcelIcon';
+import { DynamicCards } from '../../components/DynamicCards';
 import type { DataSource, RecordGroup, WorkbookSchema } from '../../models/types';
 import { recordLabel } from '../../services/consolidation';
 import { aggregateDashboard, dashboardMetrics, donutWeight, visibleAnalysisItems, type AnalysisItem, type DashboardDimension, type DashboardRecordFilter } from './analytics';
@@ -94,16 +94,17 @@ function CategoryDetail({ item, schema, sources, onClose, onRecord, onRecords }:
 const dimensions: { id: Exclude<DashboardDimension, 'examples'>; label: string }[] = [
   { id: 'all', label: 'Cobertura por indicador' }, { id: 'indicators', label: 'Registros por indicador' },
   { id: 'criteria', label: 'Criterios SEAES' }, { id: 'programmes', label: 'Programas educativos' },
-  { id: 'periods', label: 'Periodos' }, { id: 'sources', label: 'Archivos / fuentes' },
+  { id: 'periods', label: 'Periodos' }, { id: 'sources', label: 'Aportaciones por archivo' },
   { id: 'coverage', label: 'Cobertura' }, { id: 'conflicts', label: 'Conflictos pendientes' },
   { id: 'duplicates', label: 'Duplicados' },
 ];
 export { dimensions as dashboardDimensions };
 
-export function Dashboard({ schema, groups, sources, dimension, mode, hideNulls, onDimension, onRecord, onRecords, onImport }: {
+export function Dashboard({ schema, groups, sources, dimension, mode, hideNulls, onDimension, onMode, onRecord, onRecords, onImport }: {
   schema: WorkbookSchema; groups: RecordGroup[]; sources: DataSource[];
   dimension: Exclude<DashboardDimension, 'examples'>; mode: 'bars' | 'donut'; hideNulls: boolean;
   onDimension: (value: Exclude<DashboardDimension, 'examples'>) => void;
+  onMode: (value: 'bars' | 'donut') => void;
   onRecord: (group: RecordGroup) => void; onRecords: (filters: DashboardRecordFilter) => void; onImport: () => void;
 }) {
   const [detail, setDetail] = useState<AnalysisItem>();
@@ -112,23 +113,35 @@ export function Dashboard({ schema, groups, sources, dimension, mode, hideNulls,
   const allItems = useMemo(() => aggregateDashboard({ dimension, groups, sources, schema }), [dimension, groups, sources, schema]);
   const items = useMemo(() => visibleAnalysisItems(allItems, hideNulls), [allItems, hideNulls]);
   const missing = useMemo(() => aggregateDashboard({ dimension: 'indicators', groups, sources, schema }).filter(item => !item.hasData), [groups, sources, schema]);
-  const title = dimensions.find(item => item.id === dimension)?.label ?? 'Análisis de indicadores';
   return <div className="analysis-dashboard">
     <div className="analysis-kpis" aria-label="Resumen del filtro actual">
       <button onClick={() => onRecords({})}><span>Registros</span><strong>{number(metrics.records)}</strong></button>
-      <button onClick={() => onDimension('sources')}><span className="kpi-heading"><ExcelIcon size={24}/>Fuentes</span><strong>{number(metrics.sources)}</strong></button>
       <button onClick={() => onDimension('coverage')}><span>Cobertura</span><strong>{metrics.coverage.percentage}<small>%</small></strong></button>
       <button onClick={() => onDimension('indicators')}><span>Indicadores con datos</span><strong>{metrics.indicatorsWithData}<small> / {metrics.indicatorsTotal}</small></strong></button>
       <button onClick={() => onDimension('conflicts')}><span>Conflictos pendientes</span><strong className={metrics.conflicts ? 'analysis-attention' : ''}>{number(metrics.conflicts)}</strong></button>
       <button onClick={() => onDimension('duplicates')}><span>Duplicados</span><strong>{number(metrics.duplicates)}</strong></button>
     </div>
-    <section className="panel analysis-panel" aria-label="Gráficas SEAES">
-      {!groups.length ? <div className="analysis-empty"><div className="analysis-empty-mark"><BarChart3 size={28}/></div><h2>Sin registros para los filtros seleccionados</h2><button className="button primary" onClick={onImport}><Upload size={16}/>Importar Excel</button></div> : <>
-        <div className="analysis-heading"><h2>{title}</h2><span className="subtle">{dimension === 'all' || dimension === 'coverage' ? mode === 'bars' ? '% de campos capturados' : 'Campos capturados' : 'Registros'}</span></div>
-        <AnalysisChart items={items} dimension={dimension} mode={mode} onSelect={setDetail}/>
-        <div className="analysis-footer"><span>{items.length} de {allItems.length} categorías{hideNulls ? ' · nulos ocultos' : ''}</span>{!!missing.length && !hideNulls && <button className="button text small" onClick={() => setShowMissing(true)}>Ver indicadores sin datos<ArrowUpRight size={14}/></button>}</div>
-      </>}
-    </section>
+    <DynamicCards label="Análisis SEAES" className="analysis-cards" activeId={dimension} onActiveChange={id => {
+      const next = dimensions.find(item => item.id === id);
+      if (next) onDimension(next.id);
+    }} items={dimensions.map(category => ({
+      id: category.id,
+      title: category.label,
+      icon: <ChartNoAxesCombined size={23}/>,
+      content: category.id === dimension && <div className="analysis-card-content">
+        {!groups.length ? <div className="analysis-empty"><div className="analysis-empty-mark"><BarChart3 size={28}/></div><h2>Sin registros para los filtros seleccionados</h2><button className="button primary" onClick={onImport}><Upload size={16}/>Importar Excel</button></div> : <>
+          <div className="analysis-card-toolbar">
+            <span>{dimension === 'all' || dimension === 'coverage' ? mode === 'bars' ? '% de campos capturados' : 'Campos capturados' : 'Registros'}</span>
+            <div className="analysis-chart-switch" role="group" aria-label="Tipo de gráfica">
+              <button type="button" className={mode === 'bars' ? 'active' : ''} aria-pressed={mode === 'bars'} onClick={() => onMode('bars')}><BarChart3 size={15}/>Barras</button>
+              <button type="button" className={mode === 'donut' ? 'active' : ''} aria-pressed={mode === 'donut'} onClick={() => onMode('donut')}><PieChart size={15}/>Anillo</button>
+            </div>
+          </div>
+          <div className="analysis-card-chart dynamic-card-scroll"><AnalysisChart items={items} dimension={dimension} mode={mode} onSelect={setDetail}/></div>
+          <div className="analysis-footer"><span>{hideNulls ? 'Se ocultan las categorías sin captura.' : 'Selecciona una categoría para ver sus registros.'}</span>{!!missing.length && !hideNulls && <button className="button text small" onClick={() => setShowMissing(true)}>Sin datos<ArrowUpRight size={14}/></button>}</div>
+        </>}
+      </div>,
+    }))}/>
     {detail && <CategoryDetail key={`${dimension}:${detail.id}`} item={detail} schema={schema} sources={sources} onClose={() => setDetail(undefined)} onRecord={onRecord} onRecords={() => { onRecords({ groupIds: detail.groups.map(group => group.id) }); setDetail(undefined); }}/>}
     {showMissing && <Dialog title="Indicadores sin información" onClose={() => setShowMissing(false)}><div className="analysis-missing-list">{missing.map(item => <button key={item.id} onClick={() => { setShowMissing(false); setDetail(item); }}><strong>{item.label}</strong><span>{item.description}</span><ArrowUpRight size={15}/></button>)}</div></Dialog>}
   </div>;

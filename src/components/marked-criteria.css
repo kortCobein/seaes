@@ -1,0 +1,7 @@
+.marked-criteria{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;list-style:none;padding:0;margin:12px 0 3px}
+.marked-criteria li{position:relative;display:flex;align-items:center;gap:12px;min-height:68px;padding:11px 14px;overflow:hidden;border:1px solid #c5daf7;border-radius:13px;background:linear-gradient(115deg,#fff,#f0f7ff);color:var(--ut-blue);font-size:14px;line-height:1.4}
+.marked-criteria li::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--ut-blue)}
+.marked-criteria li:nth-child(4n+2)::before,.marked-criteria li:nth-child(4n+3)::before{background:var(--ut-green)}
+.marked-criteria-icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:50%;background:#dfebfb;color:var(--ut-blue)}
+.marked-criteria li:nth-child(4n+2) .marked-criteria-icon,.marked-criteria li:nth-child(4n+3) .marked-criteria-icon{background:#dcf2ed;color:var(--ut-green-dark)}
+@media(max-width:580px){.marked-criteria{grid-template-columns:minmax(0,1fr)}.marked-criteria li{min-height:58px}}

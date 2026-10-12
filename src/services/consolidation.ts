@@ -46,10 +46,19 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
       const candidates = members
         .filter(r => hasValue(r.values[field.id]))
         .map(r => ({ recordId: r.id, sourceId: r.sourceId, value: r.values[field.id] }));
+      const decision = decisions[id]?.fields?.[field.id];
+      // Preview changes the final value without rewriting any source contribution.
+      if (decision?.mode === 'value') {
+        values[field.id] = section.kind === 'identity' ? canonicalIdentity(field.label, decision.value ?? null) : decision.value ?? null;
+        origins[field.id] = { sheet: section.sheet, cell: 'Ajuste en Preview' };
+        if (candidates.length > 1 && candidates.some(c => !same(c.value, candidates[0].value))) {
+          conflicts.push({ fieldId: field.id, candidates, resolved: true });
+        }
+        continue;
+      }
       if (!candidates.length) continue;
 
       const different = candidates.some(c => !same(c.value, candidates[0].value));
-      const decision = decisions[id]?.fields?.[field.id];
       const selected = candidates.find(c => c.recordId === decision?.recordId) ?? candidates[0];
 
       // Los campos de identidad no son aportaciones acumulables. Esta aplicación es

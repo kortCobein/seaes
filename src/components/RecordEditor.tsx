@@ -4,8 +4,8 @@ import { hasValue } from '../services/consolidation';
 import { Dialog } from './Dialog';
 
 type EditorField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-export function RecordEditor({ schema, record, onClose, onSave }: {
-  schema: WorkbookSchema; record?: SeaesRecord; onClose: () => void;
+export function RecordEditor({ schema, record, sourceName, onClose, onSave }: {
+  schema: WorkbookSchema; record?: SeaesRecord; sourceName?: string; onClose: () => void;
   onSave: (data: { sectionId: string; rowId: string; values: Record<string, Scalar> }) => void;
 }) {
   const [sectionId, setSectionId] = useState(record?.sectionId ?? schema.sections[0]?.id ?? '');
@@ -61,7 +61,7 @@ export function RecordEditor({ schema, record, onClose, onSave }: {
   }
   return <>
     <Dialog title={record ? 'Editar registro' : 'Agregar registro'} onClose={() => guard(onClose)} wide drawer><form onSubmit={submit} noValidate onKeyDown={event => { if (event.key === 'Enter' && event.nativeEvent.isComposing) event.preventDefault(); }}>
-      <div className="dialog-body"><div className="form-selectors">
+      <div className="dialog-body">{sourceName && <p className="editor-source">Fuente: <strong>{sourceName}</strong></p>}<div className="form-selectors">
         <label>Indicador / sección<select value={sectionId} disabled={!!record || saving} onChange={event => { const next = schema.sections.find(item => item.id === event.target.value)!; guard(() => { setSectionId(next.id); setRowId(next.rows[0].id); setValues({}); setErrors({}); }); }}>{schema.sections.map(item => <option key={item.id} value={item.id}>{item.indicators.length ? `${item.indicators.map(value => String(value).padStart(2, '0')).join(', ')} · ` : ''}{item.label}</option>)}</select></label>
         {section.kind !== 'annex' && <label>Tipo de registro<select value={row.id} disabled={!!record || saving} onChange={event => { const nextRow = event.target.value; guard(() => { setRowId(nextRow); setValues({}); setErrors({}); }); }}>{section.rows.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>}
       </div>

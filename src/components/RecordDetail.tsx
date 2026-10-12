@@ -5,6 +5,7 @@ import { Dialog } from './Dialog';
 import { hasValue, recordLabel } from '../services/consolidation';
 import { statusText } from './RecordsTable';
 import { ConflictResolution } from '../features/records/ConflictResolution';
+import { MarkedCriteria } from './MarkedCriteria';
 
 export function RecordDetail({ group, sources, decisions, onDecision, onClose, onEdit, onDelete }: {
   group: RecordGroup; sources: DataSource[]; decisions: Record<string, GroupDecision>;
@@ -26,7 +27,7 @@ export function RecordDetail({ group, sources, decisions, onDecision, onClose, o
         <button className={`button small ${tab === 'origins' ? 'primary' : 'secondary'}`} aria-pressed={tab === 'origins'} onClick={() => setTab('origins')}>Procedencia</button>
         {hasReview && <button className={`button small ${tab === 'conflicts' ? 'primary' : 'secondary'}`} aria-pressed={tab === 'conflicts'} onClick={() => setTab('conflicts')}>{group.conflicts.length ? `Conflictos${pending ? ` · ${pending}` : ''}` : 'Coincidencias'}</button>}
       </div>
-      {tab === 'fields' && <div className="detail-table consolidated-fields"><table><thead><tr><th scope="col">Campo</th><th scope="col">Valor consolidado</th></tr></thead><tbody>{applicableFields.map(field => <tr key={field.id}><th scope="row">{field.label}</th><td>{hasValue(group.resolved.values[field.id]) ? String(group.resolved.values[field.id]) : <span className="muted">Sin captura</span>}</td></tr>)}</tbody></table></div>}
+      {tab === 'fields' && <><div className="detail-table consolidated-fields"><table><thead><tr><th scope="col">Campo</th><th scope="col">Valor consolidado</th></tr></thead><tbody>{applicableFields.filter(field => field.type !== 'choice').map(field => <tr key={field.id}><th scope="row">{field.label}</th><td>{hasValue(group.resolved.values[field.id]) ? String(group.resolved.values[field.id]) : <span className="muted">Sin captura</span>}</td></tr>)}</tbody></table></div><MarkedCriteria fields={group.section.fields} values={group.resolved.values}/></>}
       {tab === 'origins' && <section className="record-origin-panel">
         {group.records.length > 1 && <label className="record-origin-selector">Aportación<select value={record.id} onChange={event => setRecordId(event.target.value)}>{group.records.map((item, index) => <option key={item.id} value={item.id}>{sources.find(origin => origin.id === item.sourceId)?.name ?? 'Origen'} · {index + 1}</option>)}</select></label>}
         <dl className="record-metadata"><div><dt>Fuente</dt><dd>{source?.name ?? 'Origen no disponible'}{source?.kind === 'demo' && <span className="badge demo">Datos ficticios</span>}</dd></div><div><dt>Archivo</dt><dd>{source?.filename ?? 'Captura manual'}</dd></div><div><dt>Hoja</dt><dd>{group.section.sheet}</dd></div>{source?.importedAt && <div><dt>Importación</dt><dd>{new Date(source.importedAt).toLocaleString('es-MX')}</dd></div>}{record.modifiedAt && <div><dt>Última edición</dt><dd>{new Date(record.modifiedAt).toLocaleString('es-MX')}</dd></div>}</dl>

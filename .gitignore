@@ -18,3 +18,5 @@ node_modules/
 /work/parsed-demo.json
 /work/input-rows.txt
 /work/schema-verification.json
+/work/qa-ui/
+/work/qa-preview/
