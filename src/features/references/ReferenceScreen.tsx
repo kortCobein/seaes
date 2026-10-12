@@ -34,7 +34,6 @@ export function ReferenceScreen({ schema, kind, query, indicator, hideNulls = tr
       id: item.name,
       title: item.name.trim(),
       eyebrow: kindLabels[kindOf(item.name)],
-      icon: <BookOpen size={22}/>,
       content: <article className="reference-document dynamic-card-scroll" aria-label={`Contenido de ${item.name.trim()}`} tabIndex={0}>
         {item.text.split(/\r?\n\s*\r?\n/).filter(paragraph => paragraph.trim()).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
       </article>,
