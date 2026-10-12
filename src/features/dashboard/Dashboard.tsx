@@ -74,7 +74,7 @@ export function Dashboard({ schema, groups, sources, dimension, hideNulls, onDim
   const [showMissing, setShowMissing] = useState(false);
   const categories = useMemo(() => dimensions.map(category => {
     const analysis = aggregateDashboard({ dimension: category.id, groups, sources, schema });
-    const populated = analysis.filter(item => item.hasData && item.value > 0);
+    const populated = analysis.filter(item => item.hasData);
     return {
       ...category,
       count: new Set(populated.flatMap(item => item.groups.map(group => group.id))).size,
