@@ -17,6 +17,8 @@ import { RecordEditor } from './components/RecordEditor';
 import { RecordDetail } from './components/RecordDetail';
 import { SearchField } from './components/SearchField';
 import { ExcelIcon } from './components/ExcelIcon';
+import { SlidingNav } from './components/SlidingNav';
+import { AnimatedScreen } from './components/AnimatedScreen';
 
 const nav = [{ id: 'dashboard', label: 'Dashboard' }, { id: 'examples', label: 'Ejemplos' }, { id: 'indicators', label: 'Indicadores' }, { id: 'annexes', label: 'Anexos' }, { id: 'rasgos', label: 'Rasgos' }, { id: 'preview', label: 'Preview' }] as const;
 type View = typeof nav[number]['id'];
@@ -59,7 +61,7 @@ export function App() {
   if (!schema || !ready) return <div className="loading-screen"><div className="brand-mark"><ExcelIcon size={46}/></div><h1>SEAES · UTSJR</h1>{busy && <LoaderCircle className="spin"/>}<p role={error ? 'alert' : 'status'}>{busy || error}</p>{!busy && <button className="button primary" onClick={() => location.reload()}>Volver a cargar</button>}</div>;
   return <div className="app-shell"><header className="app-header unified-navbar compact-navbar">
     <a className="brand" href="#dashboard" onClick={e => { e.preventDefault(); setView('dashboard'); }}><img className="ut-navbar-logo" src={`${import.meta.env.BASE_URL}ut-logo.svg`} width={180} height={34} alt="Universidad Tecnológica de San Juan del Río"/><span className="brand-name">SEAES</span></a>
-    <nav aria-label="Secciones">{nav.map(({ id, label }) => <button key={id} className={`nav-item ${view === id ? 'active' : ''}`} aria-current={view === id ? 'page' : undefined} onClick={() => setView(id)}>{label}</button>)}</nav>
+    <SlidingNav items={nav} activeId={view} onSelect={id => setView(id as View)}/>
     <div className="nav-utilities">
       {view !== 'preview' && <><SearchField value={query} onChange={setQuery} label="Buscar en sección" placeholder="Buscar…"/>
       <button className={`nav-tool ${activeFilters ? 'has-filters' : ''}`} onClick={()=>setAdvanced(true)} title="Filtros" aria-label={`Filtros${activeFilters ? ' activos' : ''}`}><Filter size={18}/>{!!activeFilters && <span className="filter-dot"/>}</button>
@@ -71,12 +73,14 @@ export function App() {
     </div></header>
     <main className="workspace" id="main">
       <div className="feedback" aria-live="polite">{busy && <div className="message processing" role="status"><LoaderCircle size={18} className="spin"/>{busy}</div>}{error && <div className="message error" role="alert"><span>{error}</span><button className="icon-button" aria-label="Cerrar error" onClick={() => workspace.setError('')}><X size={17}/></button></div>}{notice && <div className="message success" role="status"><CheckCircle2 size={17}/><span>{notice}</span><button className="icon-button" aria-label="Cerrar aviso" onClick={() => workspace.setNotice('')}><X size={17}/></button></div>}</div>
+      <AnimatedScreen screen={view}>
       {view === 'dashboard' && <><Dashboard schema={schema} groups={filtered} sources={scopedSources} dimension={chartDimension} onDimension={setChartDimension} mode={chartMode} onMode={setChartMode} hideNulls={hideNulls} onImport={importAction} onRecord={group=>setDetailId(group.id)} onRecords={openFiltered}/>
       <FilesScreen schema={schema} sources={session.sources} records={session.records} groups={groups} busy={busy} globalQuery={query} filteredSourceId={filters.source} onEdit={record=>setEditor({record})} onDeleteRecords={deleteRecords} onAdd={sourceId=>setEditor({sourceId})} onRename={(old,name)=>workspace.setSession(s=>({...s,sources:s.sources.map(item=>item.id===old.id?{...item,name}:item)}))} onDelete={old=>setConfirmation({title:'Eliminar fuente',text:`Se eliminarán «${old.name}» y sus aportaciones de la sesión.`,label:'Eliminar fuente',action:()=>{void workspace.removeSources([old.id]);if(filters.source===old.id)reset();}})}/></>}
       {(view === 'examples' || view === 'rasgos') && <ReferenceScreen schema={schema} kind={referenceKind} query={query} indicator={filters.indicator} sourceName={source?.name} isRasgos={view === 'rasgos'} relatedRecords={filtered.length}/>}
       {view === 'indicators' && <RecordCards schema={schema} groups={indicatorGroups} sources={session.sources} kind="indicators" onDetail={g=>setDetailId(g.id)} onEdit={record=>setEditor({record})} onDelete={deleteRecords}/>}
       {view === 'annexes' && <RecordCards schema={schema} groups={filtered} sources={session.sources} kind="annexes" onDetail={g=>setDetailId(g.id)} onEdit={record=>setEditor({record})} onDelete={deleteRecords}/>}
       {view === 'preview' && <WorkbookPreview schema={schema} groups={groups} onEditCell={workspace.editPreview} onExportExcel={()=>setExporting(true)}/>}
+      </AnimatedScreen>
     <footer className="workspace-footer">© 2026 Kurt Cobain Vazquez Sanchez. All rights reserved. | Software Engineering Student</footer></main>
     {advanced && <Dialog title="Filtros" onClose={()=>setAdvanced(false)}><div className="dialog-body filter-grid">
       <label>Fuente<select value={filters.source} onChange={e=>updateFilter('source',e.target.value)}><option value="">Todos los archivos</option>{session.sources.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
