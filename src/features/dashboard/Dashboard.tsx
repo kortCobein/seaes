@@ -36,12 +36,13 @@ function CategoryDetail({ item, schema, sources, onClose, onRecord, onRecords }:
   const pageSize = 8;
   const pages = Math.max(1, Math.ceil(item.groups.length / pageSize));
   const current = item.groups.slice(page * pageSize, (page + 1) * pageSize);
-  const sourceIds = new Set(item.groups.flatMap(group => group.sourceIds));
+  const visibleRecords = item.groups.flatMap(group=>group.records.filter(record=>item.sourceScopeIds.includes(record.sourceId)));
+  const sourceIds = new Set(visibleRecords.map(record => record.sourceId));
   const definition = schema.indicators?.find(indicator => String(indicator.id) === item.id && item.label.startsWith('Indicador'));
   return <Dialog title={item.label} onClose={onClose} wide>
     <div className="analysis-detail">
       {item.description && <p className="analysis-definition">{item.description}</p>}
-      <div className="analysis-detail-counts"><span><strong>{number(item.groups.reduce((total, group) => total + group.records.length, 0))}</strong> aportaciones</span><span><strong>{sourceIds.size}</strong> fuentes</span><span><strong>{item.coverage.percentage}%</strong> cobertura cuantitativa</span></div>
+      <div className="analysis-detail-counts"><span><strong>{number(visibleRecords.length)}</strong> aportaciones</span><span><strong>{sourceIds.size}</strong> fuentes</span><span><strong>{item.coverage.percentage}%</strong> cobertura cuantitativa</span></div>
       <div className="analysis-capture-count">{number(item.coverage.filled)} / {number(item.coverage.expected)} campos cuantitativos capturados</div>
       {(definition?.description || item.period) && <details className="analysis-reference-details"><summary>Definición y periodo oficial</summary>{definition?.description && <p>{definition.description}</p>}{item.period && <p>{item.period}</p>}</details>}
       <div className="analysis-detail-table"><table aria-label={`Registros de ${item.label}`}><thead><tr><th scope="col">Registro</th><th scope="col">Fuentes</th><th scope="col">Estado</th></tr></thead><tbody>{current.map(group => <tr key={group.id}>
@@ -104,7 +105,7 @@ export function Dashboard({ schema, groups, sources, dimension, hideNulls, onDim
         </>}
       </div>,
     }))}/>
-    {detail && <CategoryDetail key={`${current}:${detail.id}`} item={detail} schema={schema} sources={sources} onClose={() => setDetail(undefined)} onRecord={onRecord} onRecords={() => { onRecords({ groupIds: detail.groups.map(group => group.id) }); setDetail(undefined); }}/>}
+    {detail && <CategoryDetail key={`${current}:${detail.id}`} item={detail} schema={schema} sources={sources} onClose={() => setDetail(undefined)} onRecord={onRecord} onRecords={() => { onRecords({ groupIds: detail.groups.map(group => group.id), source: detail.sourceScopeIds.length === 1 ? detail.sourceScopeIds[0] : undefined }); setDetail(undefined); }}/>}
     {showMissing && <Dialog title="Indicadores sin información" onClose={() => setShowMissing(false)}><div className="analysis-missing-list">{missing.map(item => <button key={item.id} onClick={() => { setShowMissing(false); setDetail(item); }}><strong>{item.label}</strong><span>{item.description}</span><ArrowUpRight size={15}/></button>)}</div></Dialog>}
   </div>;
 }

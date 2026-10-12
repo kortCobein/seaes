@@ -24,7 +24,7 @@
     inset 1px 2px 3px rgba(255,255,255,.98),
     inset -2px -3px 7px rgba(31,65,106,.09);
   color:var(--ut-blue);
-  font-size:12px;
+  font-size:15.6px;
   font-weight:550;
   line-height:1.38;
   letter-spacing:0;
@@ -54,7 +54,7 @@
 }
 @media(max-width:620px){
   .marked-criteria{grid-template-columns:minmax(0,1fr);gap:9px}
-  .marked-criteria li{font-size:12px;min-height:54px;padding:7px 12px 7px 8px}
+  .marked-criteria li{font-size:15.6px;min-height:54px;padding:7px 12px 7px 8px}
   .marked-criteria-icon{flex-basis:37px;width:37px;height:37px}
 }
 @media(prefers-reduced-motion:reduce){.marked-criteria li{transition:none}}

@@ -132,3 +132,16 @@ test('dos archivos aportantes cuentan como dos incluso cuando se consolidan en u
   assert.equal(bySources.find(item => item.id === 'b')?.value, 1);
   assert.equal(dashboardMetrics(groups, sources, schema).records, 2);
 });
+
+
+test('la fuente activa limita conteos por indicador y detalle, incluso en grupo consolidado', () => {
+  const groups = consolidate([record('from-a','i1',{count:2},'a'),record('from-b','i1',{count:3},'b')],schema);
+  assert.equal(groups.length,1);
+  const indicatorA = aggregateDashboard({dimension:'indicators',groups,sources:sources.filter(s=>s.id==='a'),schema})[0];
+  const indicatorB = aggregateDashboard({dimension:'indicators',groups,sources:sources.filter(s=>s.id==='b'),schema})[0];
+  assert.equal(indicatorA.value,1);
+  assert.equal(indicatorB.value,1);
+  assert.deepEqual(indicatorA.sourceScopeIds,['a']);
+  assert.deepEqual(indicatorB.sourceScopeIds,['b']);
+  assert.equal(aggregateDashboard({dimension:'indicators',groups,sources:sources.filter(s=>s.id!=='empty'),schema})[0].value,2);
+});

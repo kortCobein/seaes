@@ -39,7 +39,7 @@
   align-items:center;
   gap:10px;
   font-family:'Outfit','Segoe UI',sans-serif;
-  font-size:14px;
+  font-size:18.2px;
   font-weight:650;
   min-width:0;
 }
@@ -113,11 +113,11 @@
 }
 .context-menu-toggle-copy strong{
   color:var(--ut-blue);
-  font-size:12px;
+  font-size:15.6px;
   font-weight:700;
 }
 .context-menu-toggle-copy small{
-  font-size:10px;
+  font-size:13px;
   font-weight:400;
   line-height:1.35;
   color:#5E7388;
@@ -161,7 +161,7 @@
 .context-menu-caption{
   margin:5px 8px 9px;
   color:var(--ut-green-dark);
-  font-size:10px;
+  font-size:13px;
   font-weight:700;
   text-transform:uppercase;
   letter-spacing:.105em;
@@ -210,9 +210,9 @@
   color:var(--ut-green-dark);
 }
 .context-menu-option-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
-.context-menu-option-copy strong{font-size:11.5px;font-weight:700}
+.context-menu-option-copy strong{font-size:14.95px;font-weight:700}
 .context-menu-option-copy small{
-  font-size:10px;font-weight:400;line-height:1.32;
+  font-size:13px;font-weight:400;line-height:1.32;
   color:#64768C;overflow-wrap:anywhere;
 }
 .workspace-context-menu .context-menu-option:disabled{
@@ -224,14 +224,14 @@
   color:#A94343;
   background:linear-gradient(145deg,#fff,#F5DBDD);
 }
-.context-menu-extra{margin:6px 2px 8px;padding:7px 3px;font-size:12px}
+.context-menu-extra{margin:6px 2px 8px;padding:7px 3px;font-size:15.6px}
 .workspace-context-menu>footer{
   flex:0 0 auto;
   border-top:1px solid rgba(255,255,255,.9);
   padding:10px 12px 11px;
   background:rgba(232,240,251,.74);
   color:#667A93;
-  font-size:10px;
+  font-size:13px;
   text-align:center;
   line-height:1.2;
 }
@@ -239,7 +239,7 @@
   .workspace-context-menu{border-radius:22px}
   .context-menu-body{padding:10px}
   .workspace-context-menu .context-menu-option{min-height:49px;padding:6px 9px}
-  .context-menu-toggle-copy small{font-size:9.5px}
+  .context-menu-toggle-copy small{font-size:12.35px}
 }
 @media(prefers-reduced-motion:reduce){
   .workspace-context-menu{animation:none}
@@ -247,4 +247,11 @@
   .workspace-context-menu .context-menu-close,
   .workspace-context-menu .context-menu-toggle input[type=checkbox],
   .workspace-context-menu .context-menu-toggle input[type=checkbox]::after{transition:none}
+}
+
+/* Accesibilidad: distinguir ON/OFF con Windows High Contrast. */
+.context-menu-option-copy small{color:#364961}
+@media(forced-colors:active){
+  .workspace-context-menu .context-menu-toggle input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:22px;height:22px;flex-basis:22px;min-height:22px;border:1px solid CanvasText;box-shadow:none;background:Canvas;accent-color:Highlight;}
+  .workspace-context-menu .context-menu-toggle input[type=checkbox]::after{display:none;}
 }

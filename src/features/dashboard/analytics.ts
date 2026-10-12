@@ -21,6 +21,7 @@ export interface AnalysisItem {
   hasData: boolean;
   groups: RecordGroup[];
   coverage: ReturnType<typeof coverage>;
+  sourceScopeIds: string[];
 }
 
 const uniqueValues = (values: string[]) => [...new Set(values.filter(value => value.trim()))].sort((a, b) => a.localeCompare(b, 'es-MX'));
@@ -84,12 +85,14 @@ export function aggregateDashboard({ dimension, groups, universe = groups, sourc
   sources: DataSource[];
   schema: WorkbookSchema;
 }): AnalysisItem[] {
+  const scope = new Set(sources.map(source => source.id));
   const item = (id: string, label: string, matches: RecordGroup[], options: { indicator?: number; criterion?: string; sourceId?: string; description?: string; period?: string } = {}): AnalysisItem => {
     const amount = coverage(matches, schema, options.indicator, options.criterion);
+    const sourceScopeIds = options.sourceId ? [options.sourceId] : [...scope];
     return {
-      id, label, groups: matches, coverage: amount,
+      id, label, groups: matches, coverage: amount, sourceScopeIds,
       description: options.description, period: options.period,
-      value: dimension === 'all' || dimension === 'coverage' ? amount.percentage : matches.reduce((total, group) => total + group.records.filter(record => !options.sourceId || record.sourceId === options.sourceId).length, 0),
+      value: dimension === 'all' || dimension === 'coverage' ? amount.percentage : matches.reduce((total, group) => total + group.records.filter(record => sourceScopeIds.includes(record.sourceId)).length, 0),
       // A captured numerical zero is information. Percentage alone cannot distinguish it from absence.
       hasData: matches.some(group => group.section.fields.some(field => hasValue(group.resolved.values[field.id]))),
     };
