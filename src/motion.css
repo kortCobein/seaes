@@ -84,3 +84,32 @@
  .animated-route,.animated-route.is-exiting,.dynamic-card.is-active .dynamic-card-body,.dynamic-card.is-exiting .dynamic-card-body{animation:none!important;opacity:1;transform:none;filter:none}
  .app-header.unified-navbar .sliding-nav .nav-motion-capsule{transition:none!important;will-change:auto}
 }
+
+
+/* Keep the outgoing card heading in its open layout while the deck resizes. */
+.dynamic-card.is-exiting .dynamic-card-trigger{
+ height:auto!important;flex-direction:row!important;justify-content:flex-start!important;
+ padding:18px 18px 8px!important;gap:12px!important;
+}
+.dynamic-card.is-exiting .dynamic-card-heading{
+ writing-mode:horizontal-tb!important;transform:none!important;width:auto!important;
+ max-height:none!important;min-width:0!important;
+}
+.dynamic-card.is-exiting .dynamic-card-title{white-space:normal!important;font-size:19px!important}
+.dynamic-card.is-exiting .dynamic-card-icon{display:grid!important}
+.dynamic-card.is-exiting .dynamic-card-eyebrow{display:block!important}
+.dynamic-card.is-exiting .dynamic-card-badge{display:inline-flex!important}
+.dynamic-card.is-exiting .dynamic-card-pip{display:none!important}
+.dynamic-card-deck{scroll-padding-inline:12px;padding:13px 13px 28px}
+@media(max-width:980px){
+ @keyframes mobile-card-expand{from{height:60px}to{height:540px}}
+ @keyframes mobile-card-collapse{from{height:540px}to{height:60px}}
+ .dynamic-card.is-active{animation:mobile-card-expand 440ms var(--motion-ease) both}
+ .dynamic-card.is-exiting{animation:mobile-card-collapse 180ms ease-in both}
+}
+@media(max-width:600px){
+ @keyframes small-card-expand{from{height:60px}to{height:620px}}
+ @keyframes small-card-collapse{from{height:620px}to{height:60px}}
+ .dynamic-card.is-active{animation:small-card-expand 440ms var(--motion-ease) both}
+ .dynamic-card.is-exiting{animation:small-card-collapse 180ms ease-in both}
+}
