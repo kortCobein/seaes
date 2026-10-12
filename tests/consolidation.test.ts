@@ -140,9 +140,10 @@ test('comentarios y observaciones se reúnen una sola vez sin generar conflictos
   const annex = consolidate([
     record('A', 'annex', { programme: 'PE', description: 'Práctica', observations: 'Área A' }),
     record('B', 'annex', { programme: 'PE', description: 'Práctica', observations: 'Área B' }),
-  ], schema)[0];
-  assert.equal(annex.resolved.values.observations, 'Área A\nÁrea B');
-  assert.deepEqual(annex.conflicts, []);
+  ], schema);
+  assert.equal(annex.length, 2);
+  assert.deepEqual(annex.map(group => group.resolved.values.observations), ['Área A', 'Área B']);
+  assert.ok(annex.every(group => group.status === 'unique' && !group.conflicts.length));
 });
 
 test('combinar textos con recordId heredado conserva la procedencia del dist', () => {
@@ -157,28 +158,49 @@ test('combinar textos con recordId heredado conserva la procedencia del dist', (
   assert.equal(group.conflicts[0].resolved, true);
 });
 
-test('los anexos idénticos sí se reconocen como duplicados y pueden conservarse separados', () => {
-  const records = [record('A', 'annex', { programme: 'PE', description: 'Práctica' }), record('B', 'annex', { programme: 'PE', description: 'Práctica' })];
-  const groups = consolidate(records, schema);
-  assert.equal(groups.length, 1);
-  assert.equal(groups[0].status, 'exact');
-  const separate = consolidate(records, schema, { [groups[0].id]: { separate: true } });
-  assert.equal(separate.length, 2);
-  assert.ok(separate.every(group => group.records.length === 1));
-});
-
-test('diferencias de un campo no acumulable del anexo siguen siendo conflictos resolubles', () => {
+test('los anexos iguales de distintas personas o archivos son aportaciones independientes', () => {
   const records = [
     record('A', 'annex', { programme: 'PE', description: 'Práctica', status: 'En curso' }),
     record('B', 'annex', { programme: 'PE', description: 'Práctica', status: 'Terminada' }),
   ];
-  const pending = consolidate(records, schema)[0];
-  assert.equal(pending.status, 'conflict');
-  assert.equal(pending.resolved.values.status, 'En curso');
-  assert.equal(pending.conflicts[0].resolved, false);
-  const resolved = consolidate(records, schema, {
-    [pending.id]: { fields: { status: { mode: 'record', recordId: 'B' } } },
-  })[0];
-  assert.equal(resolved.resolved.values.status, 'Terminada');
-  assert.equal(resolved.conflicts[0].resolved, true);
+  const groups = consolidate(records, schema);
+  assert.equal(groups.length, 2);
+  assert.deepEqual(groups.map(group => group.resolved.values.status), ['En curso', 'Terminada']);
+  assert.ok(groups.every(group => group.records.length === 1 && group.status === 'unique' && group.conflicts.length === 0));
+  const identical = consolidate([records[0], { ...records[1], values: { ...records[0].values } }], schema);
+  assert.equal(identical.length, 2);
+  assert.ok(identical.every(group => group.status === 'unique'));
+});
+
+test('regresión Posgrado: cuatro proyectos distintos de la misma especialidad nunca se convierten en conflicto', () => {
+  // Caso observado en Anexo inds 7 y 12, filas 4, 5, 10 y 11 del Excel recibido.
+  // Programa y tipo son los mismos, pero las investigaciones pertenecen a filas distintas.
+  const titles = [
+    'Proyecto de electroremediación de agua',
+    'Proyecto de batería de flujo redox',
+    'Proyecto de estructuras metal-orgánicas',
+    'Proyecto de aceites esenciales',
+  ];
+  const records = titles.map((description, index) => ({
+    ...record(`Posgrado-row-${[4,5,10,11][index]}`, 'annex', {
+      programme: 'Maestría en Tecnología Aplicada – Procesos Químicos',
+      description,
+      status: 'Innovación disciplinar',
+    }),
+    sourceId: '7-JPFRC-Posgrado',
+    rowId: String([4,5,10,11][index]),
+  }));
+  const groups = consolidate(records, schema);
+  assert.equal(groups.length, 4);
+  assert.deepEqual(groups.map(group => group.resolved.values.description), titles);
+  assert.ok(groups.every(group => group.status === 'unique' && group.conflicts.length === 0));
+  assert.equal(new Set(groups.map(group => group.id)).size, 4);
+});
+
+test('capturas manuales en la misma fila lógica también preservan cada aportación', () => {
+  const records = [
+    { ...record('manual-1', 'annex', { programme: 'PE', description: 'Proyecto X' }), sourceId: 'manual', rowId: 'r1' },
+    { ...record('manual-2', 'annex', { programme: 'PE', description: 'Proyecto X' }), sourceId: 'manual', rowId: 'r1' },
+  ];
+  assert.equal(consolidate(records, schema).length, 2);
 });

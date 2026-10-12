@@ -50,22 +50,20 @@ test('Preview modifica solo el resultado, conserva cero, vaciado y sobrevive ser
   assert.throws(() => setPreviewValue(state, schema, 'q:1', 'x', 'Y'), /permitido/);
 });
 
-test('editar un anexo separado conserva la separación y el ajuste de otra aportación', () => {
+test('editar un anexo conserva la identidad y el ajuste de las otras aportaciones', () => {
   const annexSchema: WorkbookSchema = { ...schema, sections: [{ ...schema.sections[0], kind: 'annex',
     fields: [{ id: 'programme', label: 'Programa educativo', type: 'text' }, { id: 'n', label: 'Cantidad', type: 'number' }],
   }] };
   const state = initial();
   state.records = state.records.slice(0, 2).map(item => ({ ...item, values: { ...item.values, programme: 'Mismo programa' } }));
-  const mergedId = consolidate(state.records, annexSchema)[0].id;
-  state.decisions = { [mergedId]: { separate: true } };
-  const split = consolidate(state.records, annexSchema, state.decisions);
-  const adjusted = setPreviewValue(state, annexSchema, split[1].id, 'n', 99);
+  const separate = consolidate(state.records, annexSchema);
+  assert.equal(separate.length, 2);
+  const adjusted = setPreviewValue(state, annexSchema, separate[1].id, 'n', 99);
   const edited = saveWorkspaceRecord(adjusted, annexSchema, { sectionId: 'q', rowId: '1', values: { programme: 'Mismo programa', n: 12 } }, adjusted.records[0]);
   const result = consolidate(edited.records, annexSchema, edited.decisions);
   assert.equal(result.length, 2);
-  assert.equal(edited.decisions[mergedId].separate, true);
   assert.deepEqual(result.map(item => item.resolved.values.n), [12, 99]);
-  assert.deepEqual(edited.decisions[split[1].id], adjusted.decisions[split[1].id]);
+  assert.deepEqual(edited.decisions[separate[1].id], adjusted.decisions[separate[1].id]);
   const remaining = deleteWorkspaceRecords(edited, annexSchema, new Set(['a']));
   assert.equal(consolidate(remaining.records, annexSchema, remaining.decisions)[0].resolved.values.n, 99);
   const emptied = deleteWorkspaceRecords(remaining, annexSchema, new Set(['b']));

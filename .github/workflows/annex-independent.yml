@@ -1,0 +1,33 @@
+name: Verificar anexos independientes (Codex WIP)
+on:
+  push:
+    branches: [fix/anexos-aportaciones-independientes]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-and-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verificar TypeScript y compilar
+        run: npm run build
+      - name: Probar consolidación y edición por registro
+        run: npx tsx --test tests/consolidation.test.ts tests/workspace-records.test.ts
+      - name: Verificar paquete de producción
+        run: |
+          test -s dist/index.html
+          test -d dist/assets
+          test -d dist/data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seaes-anexos-independientes-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
