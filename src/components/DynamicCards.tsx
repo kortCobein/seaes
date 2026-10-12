@@ -1,5 +1,4 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Layers3 } from 'lucide-react';
 import './dynamic-cards.css';
 
 export interface DynamicCardItem {
@@ -50,7 +49,7 @@ export function DynamicCards({ items, label, emptyMessage = 'No hay contenido qu
         return <article key={item.id} ref={element => { if (element) cards.current.set(item.id, element); else cards.current.delete(item.id); }} className={`dynamic-card ${expanded ? 'is-active' : leaving === item.id ? 'is-exiting' : ''}`}>
           <button type="button" id={triggerId} className="dynamic-card-trigger" aria-expanded={expanded} aria-controls={panelId} onClick={() => activate(item.id)} title={expanded ? undefined : item.title}>
             <span className="dynamic-card-pip" aria-hidden="true"/>
-            <span className="dynamic-card-icon" aria-hidden="true">{item.icon ?? <Layers3 size={23}/>}</span>
+            {item.icon && <span className="dynamic-card-icon">{item.icon}</span>}
             <span className="dynamic-card-heading">
               {item.eyebrow && <span className="dynamic-card-eyebrow">{item.eyebrow}</span>}
               <span className="dynamic-card-title">{item.title}</span>
