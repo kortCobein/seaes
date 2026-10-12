@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import './motion.css';
 
 /** Retain the outgoing route briefly, so sections do not abruptly disappear on tab changes. */
 export function AnimatedScreen({ screen, children }: { screen: string; children: ReactNode }) {
