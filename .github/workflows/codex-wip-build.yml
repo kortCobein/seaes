@@ -1,7 +1,7 @@
 name: Compilar dist temporal Codex
 on:
   push:
-    branches: [fix/codex-wip-build-only]
+    branches: [fix/codex-wip-build-only, style/codex-wip-motion-polish]
   workflow_dispatch:
 permissions:
   contents: read
