@@ -18,8 +18,8 @@ jobs:
       - run: npm ci
       - name: Compilar TypeScript y Vite
         run: npm run build
-      - name: Regresión de consolidación y edición local
-        run: npx tsx --test tests/consolidation.test.ts tests/workspace-records.test.ts
+      - name: Suite completa de importación, preview, PDF y consolidación
+        run: npm test
       - name: Verificar recursos del visor
         run: |
           test -s dist/index.html
