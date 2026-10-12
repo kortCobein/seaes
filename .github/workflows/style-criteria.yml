@@ -1,0 +1,33 @@
+name: Validar estilo Celadon de menú y criterios
+on:
+  push:
+    branches: [style/celadon-contexto-criterios]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Compilación TypeScript + Vite
+        run: npm run build
+      - name: Pruebas de SEAES
+        run: npm test
+      - name: Verificar paquete web
+        run: |
+          test -s dist/index.html
+          test -d dist/assets
+          test -d dist/data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seaes-celadon-criterios-menu-dist
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error
