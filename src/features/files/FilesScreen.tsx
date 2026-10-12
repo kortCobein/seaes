@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { ChartNoAxesCombined, Check, FileText, Layers3, Pencil, Plus, Trash2, X } from 'lucide-react';
-import { ExcelIcon } from '../../components/ExcelIcon';
 import { DynamicCards, type DynamicCardItem } from '../../components/DynamicCards';
 import { RecordFields } from '../../components/RecordCards';
 import type { DataSource, RecordGroup, SeaesRecord, WorkbookSchema } from '../../models/types';
@@ -89,7 +88,7 @@ export function FilesScreen({ schema, sources, records, groups, busy, globalQuer
   const items: DynamicCardItem[] = visible.map(source => ({
     id: source.id,
     title: source.name,
-    icon: <ExcelIcon size={30}/>,
+    icon: <span className="dynamic-card-record-count" aria-label={`${records.filter(record => record.sourceId === source.id).length} aportaciones`}>{records.filter(record => record.sourceId === source.id).length}</span>,
     content: <SourceContent key={source.id} source={source} records={records} schema={schema} groups={groups} busy={busy} onRename={onRename} onDelete={onDelete} onEdit={onEdit} onDeleteRecords={onDeleteRecords} onAdd={onAdd}/>,
   }));
   return <DynamicCards items={items} label="Fuentes y registros aportados" className="source-cards" emptyMessage={globalQuery || filteredSourceId ? 'No hay fuentes que coincidan con la búsqueda.' : 'Carga un archivo de entrada para revisar sus aportaciones.'}/>;
