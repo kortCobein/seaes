@@ -6,13 +6,34 @@ import { DynamicCards, type DynamicCardItem } from './DynamicCards';
 import { statusText } from './RecordsTable';
 import { MarkedCriteria } from './MarkedCriteria';
 
-export function RecordFields({ record, section }: { record: SeaesRecord; section: SectionSchema }) {
+export function RecordFields({ record, section, showBars = false }: {
+  record: SeaesRecord; section: SectionSchema; showBars?: boolean;
+}) {
   const active = section.fields.some(field => hasValue(record.values[field.id]));
   const row = section.rows.find(item => item.id === record.rowId);
   const fields = section.fields.filter(field => field.type !== 'choice' &&
     (hasValue(record.values[field.id]) || (active && section.kind === 'quantitative' &&
       field.type === 'number' && (!row || !!row.fields[field.id]))));
-  return <>{fields.length > 0 && <dl className="dynamic-record-fields">{fields.map(field => <div key={field.id}><dt>{field.label}</dt><dd>{String(!hasValue(record.values[field.id]) && field.type === 'number' ? 0 : record.values[field.id])}</dd></div>)}</dl>}<MarkedCriteria fields={section.fields} values={record.values}/></>;
+  const numericValues = fields.filter(field => field.type === 'number').map(field =>
+    !hasValue(record.values[field.id]) ? 0 : Number(record.values[field.id]));
+  const max = numericValues.reduce((result, value) => Number.isFinite(value) ? Math.max(result, Math.abs(value)) : result, 1);
+
+  return <>
+    {fields.length > 0 && <dl className="dynamic-record-fields">{fields.map((field, index) => {
+      const raw = record.values[field.id];
+      const value = !hasValue(raw) && field.type === 'number' ? 0 : raw;
+      const numeric = field.type === 'number' && Number.isFinite(Number(value)) ? Number(value) : undefined;
+      return <div key={field.id} className="record-field-tile">
+        <dt>{field.label}</dt>
+        <dd>{String(value)}</dd>
+        {showBars && section.kind === 'quantitative' && numeric !== undefined &&
+          <span className="record-field-bar" role="img" aria-label={`${field.label}: ${numeric}`}>
+            <span style={{ width: `${Math.min(100, Math.abs(numeric) / max * 100)}%`, background: `var(--analysis-color-${index % 7}, var(--ut-green))` }}/>
+          </span>}
+      </div>;
+    })}</dl>}
+    <MarkedCriteria fields={section.fields} values={record.values}/>
+  </>;
 }
 
 interface RecordCardCategory { id: string; title: string; description: string; groups: RecordGroup[] }
@@ -40,7 +61,7 @@ function ContributionContent({ category, sources, onDetail, onEdit, onDelete }: 
   return <div className="dynamic-card-layout">
     <nav className="dynamic-card-menu" aria-label={`Aportaciones de ${category.title}`}>
       <span className="dynamic-menu-heading">Aportaciones</span>
-      {hasSeveralSources && <button type="button" className={`dynamic-menu-button ${!sourceId ? 'active' : ''}`} aria-pressed={!sourceId} onClick={() => setSelectedSource('')}><Layers3 size={16}/><span>{hasMergedContribution ? 'Consolidado' : 'Todas'}</span><small>{category.groups.length}</small></button>}
+      {hasSeveralSources && <button type="button" className={`dynamic-menu-button ${!sourceId ? 'active' : ''}`} aria-pressed={!sourceId} onClick={() => setSelectedSource('')}><Layers3 size={16}/><span>{hasMergedContribution ? 'Consolidado' : 'Todas'}</span><small>{category.groups.reduce((total, group) => total + group.records.length, 0)}</small></button>}
       {contributors.map(source => <button type="button" key={source.id} className={`dynamic-menu-button ${sourceId === source.id ? 'active' : ''}`} aria-pressed={sourceId === source.id} title={source.name} onClick={() => setSelectedSource(source.id)}><FileSpreadsheet size={16}/><span>{source.name}</span><small>{category.groups.reduce((total, group) => total + group.records.filter(record => record.sourceId === source.id).length, 0)}</small></button>)}
     </nav>
     <div className="dynamic-card-scroll" aria-live="polite">
@@ -56,7 +77,7 @@ function ContributionContent({ category, sources, onDetail, onEdit, onDelete }: 
             {direct && <button type="button" className="icon-button danger" aria-label={`Eliminar ${label}`} title="Eliminar este registro de su fuente" onClick={() => onDelete([originalRecord])}><Trash2 size={15}/></button>}
           </div></div>
           {!original && group.records.length > 1 && <p className="dynamic-record-note">{group.records.length} aportaciones · <button type="button" className={`badge ${pending ? 'conflict' : group.status}`} onClick={() => onDetail(group)}>{pending ? `${pending} conflictos por revisar` : group.status === 'conflict' ? 'Conflictos resueltos' : statusText[group.status]}</button></p>}
-          <RecordFields record={record} section={group.section}/>
+          <RecordFields record={record} section={group.section} showBars={group.section.kind === 'quantitative'}/>
         </section>;
       })}
       {!entries.length && <p className="dynamic-record-empty">Sin aportaciones en esta selección.</p>}
@@ -88,7 +109,7 @@ export function RecordCards({ schema, groups, sources, kind, onDetail, onEdit, o
     title: category.title,
     eyebrow: `${kind === 'annexes' ? 'Anexo' : 'Indicador'} ${index + 1} de ${categories.length}`,
     description: category.description,
-    icon: <span className="dynamic-card-record-count" aria-label={`${category.groups.length} aportaciones`}>{category.groups.length}</span>,
+    icon: <span className="dynamic-card-record-count" aria-label={`${category.groups.reduce((total, group) => total + group.records.length, 0)} aportaciones`}>{category.groups.reduce((total, group) => total + group.records.length, 0)}</span>,
     content: <ContributionContent key={category.id} category={category} sources={sources} onDetail={onDetail} onEdit={onEdit} onDelete={onDelete}/>,
   }));
   return <DynamicCards items={items} label={kind === 'annexes' ? 'Anexos por hoja' : 'Indicadores y aportaciones'} emptyMessage="Sin aportaciones para los filtros seleccionados."/>;

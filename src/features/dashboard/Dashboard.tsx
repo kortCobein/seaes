@@ -41,7 +41,7 @@ function CategoryDetail({ item, schema, sources, onClose, onRecord, onRecords }:
   return <Dialog title={item.label} onClose={onClose} wide>
     <div className="analysis-detail">
       {item.description && <p className="analysis-definition">{item.description}</p>}
-      <div className="analysis-detail-counts"><span><strong>{number(item.groups.length)}</strong> aportaciones</span><span><strong>{sourceIds.size}</strong> fuentes</span><span><strong>{item.coverage.percentage}%</strong> cobertura cuantitativa</span></div>
+      <div className="analysis-detail-counts"><span><strong>{number(item.groups.reduce((total, group) => total + group.records.length, 0))}</strong> aportaciones</span><span><strong>{sourceIds.size}</strong> fuentes</span><span><strong>{item.coverage.percentage}%</strong> cobertura cuantitativa</span></div>
       <div className="analysis-capture-count">{number(item.coverage.filled)} / {number(item.coverage.expected)} campos cuantitativos capturados</div>
       {(definition?.description || item.period) && <details className="analysis-reference-details"><summary>Definición y periodo oficial</summary>{definition?.description && <p>{definition.description}</p>}{item.period && <p>{item.period}</p>}</details>}
       <div className="analysis-detail-table"><table aria-label={`Registros de ${item.label}`}><thead><tr><th scope="col">Registro</th><th scope="col">Fuentes</th><th scope="col">Estado</th></tr></thead><tbody>{current.map(group => <tr key={group.id}>
@@ -77,7 +77,7 @@ export function Dashboard({ schema, groups, sources, dimension, hideNulls, onDim
     const populated = analysis.filter(item => item.hasData);
     return {
       ...category,
-      count: new Set(populated.flatMap(item => item.groups.map(group => group.id))).size,
+      count: [...new Map(populated.flatMap(item => item.groups).map(group => [group.id, group])).values()].reduce((total, group) => total + group.records.length, 0),
       hasData: populated.length > 0,
     };
   }), [groups, sources, schema]);

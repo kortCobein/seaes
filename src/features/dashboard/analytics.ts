@@ -66,7 +66,7 @@ export function filterDashboardGroups(groups: RecordGroup[], schema: WorkbookSch
 export function dashboardMetrics(groups: RecordGroup[], sources: DataSource[], schema: WorkbookSchema) {
   const indicators = indicatorDefinitions(schema);
   return {
-    records: groups.length,
+    records: groups.reduce((total, group) => total + group.records.length, 0),
     sources: sources.length,
     coverage: coverage(groups, schema),
     indicatorsWithData: indicators.filter(indicator => groups.some(group => group.section.indicators.includes(indicator.id))).length,
@@ -84,12 +84,12 @@ export function aggregateDashboard({ dimension, groups, universe = groups, sourc
   sources: DataSource[];
   schema: WorkbookSchema;
 }): AnalysisItem[] {
-  const item = (id: string, label: string, matches: RecordGroup[], options: { indicator?: number; criterion?: string; description?: string; period?: string } = {}): AnalysisItem => {
+  const item = (id: string, label: string, matches: RecordGroup[], options: { indicator?: number; criterion?: string; sourceId?: string; description?: string; period?: string } = {}): AnalysisItem => {
     const amount = coverage(matches, schema, options.indicator, options.criterion);
     return {
       id, label, groups: matches, coverage: amount,
       description: options.description, period: options.period,
-      value: dimension === 'all' || dimension === 'coverage' ? amount.percentage : matches.length,
+      value: dimension === 'all' || dimension === 'coverage' ? amount.percentage : matches.reduce((total, group) => total + group.records.filter(record => !options.sourceId || record.sourceId === options.sourceId).length, 0),
       // A captured numerical zero is information. Percentage alone cannot distinguish it from absence.
       hasData: matches.some(group => group.section.fields.some(field => hasValue(group.resolved.values[field.id]))),
     };
@@ -97,7 +97,7 @@ export function aggregateDashboard({ dimension, groups, universe = groups, sourc
   if (dimension === 'criteria') return schema.criteria.map(criterion => item(criterion.id, criterion.label,
     groups.filter(group => group.section.fields.some(field => field.criterion === criterion.id && hasValue(group.resolved.values[field.id]))), { criterion: criterion.id }));
   if (dimension === 'sources') return sources.map(source => item(source.id, source.name,
-    groups.filter(group => group.sourceIds.includes(source.id)), { description: source.filename })).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, 'es-MX'));
+    groups.filter(group => group.sourceIds.includes(source.id)), { description: source.filename, sourceId: source.id })).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, 'es-MX'));
   if (dimension === 'programmes' || dimension === 'periods') {
     const values = (group: RecordGroup) => dimension === 'programmes' ? recordProgrammes(group) : recordPeriods(group, schema);
     const categories = uniqueValues(universe.flatMap(values));

@@ -1,0 +1,33 @@
+name: Verificar SEAES navbar y aportaciones
+on:
+  push:
+    branches: [fix/navbar-ut-solo-logo-sin-scroll]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validar TypeScript y Vite
+        run: npm run build
+      - name: Ejecutar suite Excel
+        run: npm test
+      - name: Comprobar despliegue
+        run: |
+          test -s dist/index.html
+          test -d dist/assets
+          test -d dist/data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seaes-navbar-contadores-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

@@ -86,12 +86,14 @@ export function FilesScreen({ schema, sources, records, groups, busy, globalQuer
     return sources.filter(source => (!hideNulls || records.some(record => record.sourceId === source.id)) && (!filteredSourceId || source.id === filteredSourceId) && (!query || normalize(`${source.name} ${source.filename}`).includes(query)
       || records.some(record => record.sourceId === source.id && normalize(Object.values(record.values).join(' ')).includes(query))));
   }, [sources, records, globalQuery, filteredSourceId, hideNulls]);
+  // No desplegar una tarjeta/pantalla vacía: la importación está en el menú contextual.
+  if (!visible.length) return null;
   const items: DynamicCardItem[] = visible.map(source => ({
     id: source.id,
     title: source.name,
     icon: <span className="dynamic-card-record-count" aria-label={`${records.filter(record => record.sourceId === source.id).length} aportaciones`}>{records.filter(record => record.sourceId === source.id).length}</span>,
     content: <SourceContent key={source.id} source={source} records={records} schema={schema} groups={groups} busy={busy} onRename={onRename} onDelete={onDelete} onEdit={onEdit} onDeleteRecords={onDeleteRecords} onAdd={onAdd}/>,
   }));
-  return <DynamicCards items={items} label="Fuentes y registros aportados" className="source-cards" emptyMessage={globalQuery || filteredSourceId ? 'No hay fuentes que coincidan con la búsqueda.' : 'Carga un archivo de entrada para revisar sus aportaciones.'}/>;
+  return <DynamicCards items={items} label="Fuentes y registros aportados" className="source-cards"/>;
 }
 
