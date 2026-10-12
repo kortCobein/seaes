@@ -96,8 +96,8 @@ function SheetGrid({ sheet, zoom, compact, onEdit }: {
       {sheet.charts} gráfica{sheet.charts === 1 ? '' : 's'} conservada{sheet.charts === 1 ? '' : 's'} en el Excel. Aquí se muestran las celdas; el navegador no renderiza los gráficos originales.
     </p>}
     <div className="preview-grid-scroll" ref={scroll} tabIndex={0}
-      aria-label={\`Cuadrícula de \${sheet.name}, desplazable horizontal y verticalmente.\`}>
-      <div className="preview-grid-scale" style={{ zoom: \`\${zoom}%\` }}>
+      aria-label={`Cuadrícula de ${sheet.name}, desplazable horizontal y verticalmente.`}>
+      <div className="preview-grid-scale" style={{ zoom: `${zoom}%` }}>
         <table className="preview-grid"><caption className="sr-only">{sheet.name}: celdas del Excel</caption>
           <thead><tr><th scope="col" aria-label="Número de fila"/>{layout.cols.map(col =>
             <th scope="col" key={col}>{letters(col)}</th>)}</tr></thead>
@@ -110,11 +110,11 @@ function SheetGrid({ sheet, zoom, compact, onEdit }: {
               if (!cell) return <td key={col} {...span}/>;
               return <td key={col} {...span}
                 style={{ background: cell.background, color: cell.color, fontWeight: cell.bold ? 650 : undefined }}
-                className={\`\${cell.binding ? 'preview-editable' : ''} \${cell.formula ? 'preview-formula' : ''}\`}>
+                className={`${cell.binding ? 'preview-editable' : ''} ${cell.formula ? 'preview-formula' : ''}`}>
                 {cell.formula
                   ? <div className="preview-formula-value"><code>{cell.formula}</code><small>Almacenado, no recalculado: {String(cell.value ?? 'Sin resultado')}</small></div>
                   : cell.binding
-                    ? <button type="button" onClick={() => onEdit(cell)} title={\`Editar \${cell.ref}: \${cell.binding?.field.label}\`}>
+                    ? <button type="button" onClick={() => onEdit(cell)} title={`Editar ${cell.ref}: ${cell.binding?.field.label}`}>
                         <span>{cell.value === null || cell.value === '' ? <em>Sin captura</em> : String(cell.value)}</span><Pencil size={13}/></button>
                     : <span>{String(cell.value ?? '')}</span>}
               </td>;
@@ -183,13 +183,13 @@ export function PreviewWorkspace({ preview, onEdit, refreshing }: {
         </button>
       </div>
     </div>
-    <div className={\`preview-workspace-body\${sidebar ? '' : ' no-sidebar'}\`}>
+    <div className={`preview-workspace-body${sidebar ? '' : ' no-sidebar'}`}>
       {sidebar && <aside className="preview-sheets-nav" aria-label="Navegación entre hojas">
         <label className="preview-sheet-search"><Search size={16}/><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar hoja…" aria-label="Buscar hoja por nombre"/></label>
         <span className="preview-sheets-label">HOJAS DEL LIBRO <small>{preview.sheets.length}</small></span>
         <div className="preview-sheets-list">
           {items.map(({ item, index }) => <button key={item.name} type="button"
-            className={\`preview-sheet-link\${index === sheetIndex ? ' is-selected' : ''}\`}
+            className={`preview-sheet-link${index === sheetIndex ? ' is-selected' : ''}`}
             onClick={() => setSheetIndex(index)} aria-current={index === sheetIndex ? 'page' : undefined}
             title={item.name}>
             <span className="preview-sheet-index">{String(index + 1).padStart(2, '0')}</span>
