@@ -66,14 +66,14 @@ export function App() {
     <main className="workspace" id="main">
       <div className="feedback" aria-live="polite">{busy && <div className="message processing" role="status"><LoaderCircle size={18} className="spin"/>{busy}</div>}{error && <div className="message error" role="alert"><span>{error}</span><button className="icon-button" aria-label="Cerrar error" onClick={() => workspace.setError('')}><X size={17}/></button></div>}{notice && <div className="message success" role="status"><CheckCircle2 size={17}/><span>{notice}</span><button className="icon-button" aria-label="Cerrar aviso" onClick={() => workspace.setNotice('')}><X size={17}/></button></div>}</div>
       <AnimatedScreen screen={view}>
-      {view === 'dashboard' && <><Dashboard schema={schema} groups={filtered} sources={scopedSources} dimension={chartDimension} onDimension={setChartDimension} hideNulls={hideNulls} onImport={importAction} onRecord={group=>setDetailId(group.id)} onRecords={openFiltered}/>
+      {view === 'dashboard' && <>{session.sources.length > 0 && <Dashboard schema={schema} groups={filtered} sources={scopedSources} dimension={chartDimension} onDimension={setChartDimension} hideNulls={hideNulls} onImport={importAction} onRecord={group=>setDetailId(group.id)} onRecords={openFiltered}/>}
       {session.sources.length > 0 && <FilesScreen schema={schema} sources={session.sources} records={session.records} groups={groups} busy={busy} globalQuery={query} hideNulls={hideNulls} filteredSourceId={filters.source} onEdit={record=>setEditor({record})} onDeleteRecords={deleteRecords} onAdd={sourceId=>setEditor({sourceId})} onRename={(old,name)=>workspace.setSession(s=>({...s,sources:s.sources.map(item=>item.id===old.id?{...item,name}:item)}))} onDelete={old=>setConfirmation({title:'Eliminar fuente',text:`Se eliminarán «${old.name}» y sus aportaciones de la sesión.`,label:'Eliminar fuente',action:()=>{void workspace.removeSources([old.id]);if(filters.source===old.id)reset();}})}/> }</>}
       {(view === 'examples' || view === 'rasgos') && <ReferenceScreen schema={schema} kind={referenceKind} query={query} hideNulls={hideNulls} indicator={filters.indicator} sourceName={source?.name} isRasgos={view === 'rasgos'} relatedRecords={filtered.length}/>}
       {view === 'indicators' && <RecordCards schema={schema} groups={indicatorGroups} sources={session.sources} kind="indicators" onDetail={g=>setDetailId(g.id)} onEdit={record=>setEditor({record})} onDelete={deleteRecords}/>}
       {view === 'annexes' && <RecordCards schema={schema} groups={filtered} sources={session.sources} kind="annexes" onDetail={g=>setDetailId(g.id)} onEdit={record=>setEditor({record})} onDelete={deleteRecords}/>}
       {view === 'preview' && <WorkbookPreview schema={schema} groups={groups} onEditCell={workspace.editPreview} onExportExcel={()=>setExporting(true)}/>}
       </AnimatedScreen>
-    <footer className="workspace-footer">© 2026 Kurt Cobain Vazquez Sanchez. All rights reserved. | Software Engineering Student</footer></main>
+    </main>
     <WorkspaceContextMenu hideNulls={hideNulls} setHideNulls={setHideNulls}
       onFilters={()=>setAdvanced(true)} onReset={reset} onImport={importAction} onExport={()=>setExporting(true)}
       onAdd={()=>setEditor({ sourceId: filters.source || undefined })} onClear={clearSession}
