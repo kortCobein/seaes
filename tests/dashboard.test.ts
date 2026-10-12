@@ -128,5 +128,7 @@ test('dos archivos aportantes cuentan como dos incluso cuando se consolidan en u
   const byIndicator = aggregateDashboard({ dimension: 'indicators', groups, sources, schema });
   assert.equal(byIndicator.find(item => item.id === '1')?.value, 2, 'La barra indica aportaciones reales');
   const bySources = aggregateDashboard({ dimension: 'sources', groups, sources, schema });
-  assert.equal(bySources.find(item => item.id === 'a')?.value, 2, 'Cuando un grupo incluye dos fuentes, el total no pierde sus aportaciones');
+  assert.equal(bySources.find(item => item.id === 'a')?.value, 1);
+  assert.equal(bySources.find(item => item.id === 'b')?.value, 1);
+  assert.equal(dashboardMetrics(groups, sources, schema).records, 2);
 });
