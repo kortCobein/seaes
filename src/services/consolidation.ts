@@ -7,10 +7,13 @@ const same = (a: Scalar, b: Scalar) => typeof a === typeof b && normalize(a) ===
 const unavailable = (value: Scalar) => typeof value === 'string' && normalize(value) === 'no disponible';
 
 function identity(record: SeaesRecord, section: SectionSchema) {
+  // Cuantitativos: la misma fila del formulario representa el mismo total y se consolida.
   if (section.kind !== 'annex') return `${section.id}:${record.rowId}`;
-  const keys = section.fields.filter(f => f.type === 'text' && !/observaci|comentario|evidencia|liga|url/i.test(f.label)).slice(0, 2);
-  const values = keys.map(f => normalize(record.values[f.id]));
-  return `${section.id}:${values.some(Boolean) ? JSON.stringify(values) : record.id}`;
+  // Anexos: programa, categoría, título y hasta textos idénticos NO prueban que
+  // pertenezcan al mismo proyecto/persona. Cada fila importada o captura manual
+  // conserva su identidad estable. Fusionar por campos provocaba falsos conflictos
+  // en Anexo inds 7 y 12 (varios proyectos de un mismo posgrado).
+  return `${section.id}:${record.id}`;
 }
 
 function canonicalIdentity(label: string, fallback: Scalar): Scalar {
@@ -26,8 +29,7 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
   for (const record of records) {
     const section = sections.get(record.sectionId);
     if (!section || !fieldCount(record)) continue;
-    const base = identity(record, section);
-    const key = section.kind === 'annex' && decisions[base]?.separate ? `${base}:${record.id}` : base;
+    const key = identity(record, section);
     buckets.set(key, [...(buckets.get(key) ?? []), record]);
   }
 
@@ -135,11 +137,7 @@ export function consolidate(records: SeaesRecord[], schema: WorkbookSchema, deci
     });
   }
 
-  // Qualitative entries with the same programme but different descriptions remain independent.
-  const programmeCounts = new Map<string, number>();
-  const programmeKey = (g: RecordGroup) => `${g.section.id}:${normalize(g.resolved.values[g.section.fields.find(f => f.type === 'text')?.id ?? ''])}`;
-  for (const group of groups.filter(g => g.section.kind === 'annex')) programmeCounts.set(programmeKey(group), (programmeCounts.get(programmeKey(group)) ?? 0) + 1);
-  for (const group of groups) if (group.section.kind === 'annex' && group.status === 'unique' && (programmeCounts.get(programmeKey(group)) ?? 0) > 1) group.status = 'possible';
+  // No etiquetar como coincidencias los proyectos de un mismo programa.
   return groups;
 }
 
