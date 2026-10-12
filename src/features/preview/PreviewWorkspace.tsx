@@ -37,18 +37,20 @@ function SheetGrid({ sheet, zoom, compact, onEdit }: {
     // Only one sheet renders at a time. Split exceptionally long sheets into consecutive
     // row ranges to avoid generating tens of thousands of DOM elements in one render.
     const usedRows = [...new Set(coords.map(cell => cell.row))].sort((a, b) => a - b);
-    const rows = compact ? usedRows : Array.from({ length: rowMax }, (_, index) => index + 1);
     const cols = compact
       ? [...new Set(coords.map(cell => cell.col))].sort((a, b) => a - b)
       : Array.from({ length: colMax }, (_, index) => index + 1);
-    return { byRef, rows, cols, rowMax, colMax };
+    return { byRef, usedRows, cols, rowMax, colMax };
   }, [sheet, compact]);
 
-  const pages = Math.max(1, Math.ceil(layout.rows.length / ROW_CHUNK));
+  const totalRows = compact ? layout.usedRows.length : layout.rowMax;
+  const pages = Math.max(1, Math.ceil(totalRows / ROW_CHUNK));
   const selectedPage = Math.min(page, pages - 1);
-  const visibleRows = useMemo(() =>
-    layout.rows.slice(selectedPage * ROW_CHUNK, (selectedPage + 1) * ROW_CHUNK),
-    [layout.rows, selectedPage]);
+  const visibleRows = useMemo(() => compact
+    ? layout.usedRows.slice(selectedPage * ROW_CHUNK, (selectedPage + 1) * ROW_CHUNK)
+    : Array.from({ length: Math.min(ROW_CHUNK, layout.rowMax - selectedPage * ROW_CHUNK) },
+        (_, index) => selectedPage * ROW_CHUNK + index + 1),
+    [compact, layout.usedRows, layout.rowMax, selectedPage]);
   const { spans, covered } = useMemo(() => {
     const spans = new Map<string, { colSpan: number; rowSpan: number }>();
     const covered = new Set<string>();
