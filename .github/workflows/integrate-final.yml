@@ -1,0 +1,51 @@
+name: Integrar y publicar SEAES final
+on:
+  push:
+    branches: [fix/integracion-final-ut-svg-20261012]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Aplicar cambios integrados y SVG oficial
+        run: |
+          base64 --decode integration/seaes.patch.gz.base64 | gzip -dc > /tmp/integration.patch
+          git apply --check /tmp/integration.patch
+          git apply /tmp/integration.patch
+          rm integration/seaes.patch.gz.base64
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Pruebas automatizadas
+        run: npm test
+      - name: Compilar dist actualizado
+        run: npm run build
+      - name: Comprobar paquete y logo
+        run: |
+          test -s dist/index.html
+          test -s dist/ut-logo.svg
+          test -s dist/data/schema.json
+          test -d dist/assets
+          cmp public/ut-logo.svg dist/ut-logo.svg
+          test "$(find dist -type f | wc -l)" -gt 10
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SEAES-UTSJR-DIST-INTEGRADO
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Guardar fuente y dist en la rama, sin tocar main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A UX-CONTRACT.md src/ public/ tests/ dist/ integration/
+          git commit -m "feat: integrar mejoras SEAES, SVG UT y dist validado [skip ci]"
+          git push origin HEAD:fix/integracion-final-ut-svg-20261012
